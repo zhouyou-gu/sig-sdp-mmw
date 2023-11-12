@@ -48,9 +48,10 @@ class mmwm_scipy(feasibility_check_alg):
         d_sum += d_best
         X_best = scipy.sparse.identity(self.K)
 
-        for i in range(10):
-            csr_expm_rank_dsketch(csr_scal_cons_inplace(CC,0.5),K=self.K,d=Z,r=Z)
-            pass
+        return CC
+        # for i in range(10):
+        #     csr_expm_rank_dsketch(csr_scal_cons_inplace(CC,0.5),K=self.K,d=Z,r=Z)
+        #     pass
 
 
 

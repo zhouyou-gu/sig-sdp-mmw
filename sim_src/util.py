@@ -93,7 +93,7 @@ def profile(func):
         try:
             return prof(func)(*args, **kwargs)
         finally:
-            prof.print_stats(output_unit=1e-3)
+            prof.print_stats(output_unit=1e-6)
 
     return wrapper
 

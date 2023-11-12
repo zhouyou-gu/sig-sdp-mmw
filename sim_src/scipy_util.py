@@ -20,6 +20,7 @@ def csr_scal_cons_inplace(csr, factor:float):
     csr.data = csr.data * factor
     return csr
 
+@profile
 def csr_expm_rank_dsketch(csr, K, d, r=10):
     res = np.zeros((K,d))
     randv = np.random.randn(K,d)/d
