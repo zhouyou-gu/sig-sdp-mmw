@@ -7,7 +7,9 @@ class env():
     PI = 3.14159265358979323846
     HIDDEN_LOSS = 200.
     NOISE_FLOOR_DBM = -94.
-    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 1e-2, fre_Hz = 4e9, txp_dbm = 0., min_s_n_ratio = 0.1, packet_bit = 400, bandwidth = 2e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
+    BOLTZMANN = 1.3803e-23
+    NOISEFIGURE = 13
+    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 1e-2, fre_Hz = 4e9, txp_dbm = 5., min_s_n_ratio = 0.1, packet_bit = 400, bandwidth = 4e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
         self.rand_gen_loc = np.random.default_rng(seed)
         self.rand_gen_fad = np.random.default_rng(seed)
         self.rand_gen_mob = np.random.default_rng(seed)
@@ -56,59 +58,73 @@ class env():
     def _config_sta_locs(self):
         self.sta_locs = self.rand_gen_loc.uniform(low=0.,high=self.grid_edge,size=(self.n_sta,2))
 
-
     def _compute_min_sinr(self):
-        def db_to_dec(snr_db):
-            return 10.**(snr_db/10.)
-
-        def polyanskiy_model(snr, L, B, T):
-            nu = - L * math.log(2.) + B * T * math.log(1+snr)
-            do = math.sqrt(B * T * (1. - 1./((1.+snr)**2)))
-            return scipy.stats.norm.sf(nu/do)
-
-        def bisection_method(L, B, T, max_err, a=-5., b=30., tol=0.1):
-            def err(x, L, B, T):
-                snr = db_to_dec(x)
-                return polyanskiy_model(snr, L, B, T)/max_err - 1.
-
-            if err(a, L, B, T) * err(b, L, B, T) >= 0:
-                print("Bisection method fails.")
-                return None
-
-            while (err(a, L, B, T) - err(b, L, B, T)) > tol:
-                midpoint = (a + b) / 2
-                if err(midpoint, L, B, T) == 0:
-                    return midpoint
-                elif err(a, L, B, T) * err(midpoint, L, B, T) < 0:
-                    b = midpoint
-                else:
-                    a = midpoint
-
-            return (a + b) / 2
-
-        self.min_sinr = bisection_method(self.packet_bit,self.bandwidth,self.slot_time, self.max_err)
-
+        min_sinr_db = env.bisection_method(self.packet_bit,self.bandwidth,self.slot_time, self.max_err)
+        self.min_sinr = env.db_to_dec(min_sinr_db)
         return self.min_sinr
+
+    @classmethod
+    def bandwidth_txpr_to_noise_dBm(cls, B):
+        # Nt = cls.BOLTZMANN * 290 * B
+        # return 10*math.log10(Nt) + 30 + env.NOISEFIGURE
+        return env.NOISE_FLOOR_DBM
+
+    @staticmethod
+    def fre_dis_to_loss_dB(fre_Hz, dis):
+        L = 20. * math.log10(fre_Hz/1e6) + 16 - 28
+        loss = L + 28 * np.log10(dis+1) # at least one-meter distance
+        return loss
+
+    @staticmethod
+    def db_to_dec(snr_db):
+        return 10.**(snr_db/10.)
+
+    @staticmethod
+    def polyanskiy_model(snr, L, B, T):
+        nu = - L * math.log(2.) + B * T * math.log(1+snr)
+        do = math.sqrt(B * T * (1. - 1./((1.+snr)**2)))
+        return scipy.stats.norm.sf(nu/do)
+
+    @staticmethod
+    def err(x, L, B, T, max_err):
+        snr = env.db_to_dec(x)
+        return env.polyanskiy_model(snr, L, B, T)/max_err - 1.
+
+    @staticmethod
+    def bisection_method(L, B, T, max_err=1e-5, a=-5., b=30., tol=0.1):
+
+        if env.err(a, L, B, T, max_err) * env.err(b, L, B, T, max_err) >= 0:
+            print("Bisection method fails.")
+            return None
+
+        while (env.err(a, L, B, T, max_err) - env.err(b, L, B, T, max_err)) > tol:
+            midpoint = (a + b) / 2
+            if env.err(midpoint, L, B, T, max_err) == 0:
+                return midpoint
+            elif env.err(a, L, B, T, max_err) * env.err(midpoint, L, B, T, max_err) < 0:
+                b = midpoint
+            else:
+                a = midpoint
+
+        return (a + b) / 2
+
 
     def _compute_state(self):
         dis = scipy.spatial.distance.cdist(self.sta_locs,self.ap_locs)
-        L = 20. * math.log10(self.fre_Hz/1e6) + 16 - 28
-        loss = L + 28 * np.log10(dis+1) # at least one-meter distance
+        self.loss = env.fre_dis_to_loss_dB(self.fre_Hz,dis)
 
-        self.loss = loss
-
-        rxpr_db = self.txp_dbm - self.loss - self.NOISE_FLOOR_DBM
+        rxpr_db = self.txp_dbm - self.loss - self.bandwidth_txpr_to_noise_dBm(self.bandwidth)
         self.rxpr = 10 ** (rxpr_db/10.)
 
-        self.rxpr[self.rxpr<0.1] = 0.
+        self.rxpr[self.rxpr<0.5] = 0.
 
         self.rxpr = scipy.sparse.csr_matrix(self.rxpr)
 
-        return self.loss
+        return self.rxpr
 
 
 if __name__ == '__main__':
-    e = env()
+    e = env(cell_size=5)
     print(e.ap_locs)
     print(e.sta_locs)
     print("n_sta",e.n_sta)
@@ -119,9 +135,11 @@ if __name__ == '__main__':
     # print(10 * math.log10(1e6))
     print(e._compute_min_sinr())
 
-    def polyanskiy_model(snr, L, B, T):
-        nu = - L * math.log(2.) + B * T * math.log(1+snr)
-        do = math.sqrt(B * T * (1. - 1./((1.+snr)**2)))
-        return scipy.stats.norm.sf(nu/do)
-
-    print(polyanskiy_model(10.**(4.67/10.),400,2e6,1.25e-4))
+    print(env.bandwidth_txpr_to_noise_dBm(e.bandwidth))
+    l = env.fre_dis_to_loss_dB(e.fre_Hz,10*math.sqrt(2))
+    print(l)
+    print(e.txp_dbm-l-env.bandwidth_txpr_to_noise_dBm(e.bandwidth))
+    print(e.db_to_dec(e.txp_dbm-l-env.bandwidth_txpr_to_noise_dBm(e.bandwidth)))
+    print(e.rxpr.nnz,e.rxpr.nnz/e.n_sta,e.n_sta)
+    print(env.polyanskiy_model(2.9342,400,e.bandwidth,1.25e-4))
+    print(10.*math.log10(e._compute_min_sinr()))
