@@ -146,19 +146,21 @@ class mmwm_scipy(feasibility_check_alg):
 
             # get LI(X) and dX_LI(X)
             HX = X_offdi.copy()
-            HX.data = (X_offdi.data * (Z - 1) + 1.) * self.H.data / Z
-            I = np.asarray(HX.sum(axis=1)).ravel() / self.I_max
-            I_violation_idx = (I > 1.)
+            HX.data = ((X_offdi.data - 1.) * (Z - 1)) * self.H.data / Z
+            I = np.asarray(HX.sum(axis=1)).ravel()
+            aa = 1/0.84
+            I_max_I_sum = (self.I_max - (1+self.ETA*Z/(Z-1.)*2.)*self.I)*(aa)
+            I_violation_idx = (I > I_max_I_sum)
             I_violation_cnt = np.sum(I_violation_idx)
-            I_violation_err = np.sum(I[I_violation_idx] - 1.)
+            I_violation_err = np.sum((I[I_violation_idx] - I_max_I_sum[I_violation_idx])/self.I[I_violation_idx])
             I_dX_A = csr_zero_rows_inplace(self.H.copy(),np.invert(I_violation_idx))
-            I_dX_A = csr_scal_rows_inplace(I_dX_A,1./self.I_max)
+            I_dX_A = csr_scal_rows_inplace(I_dX_A,1./self.I)
             I_dX_A.data = I_dX_A.data*(Z-1.)/Z
             I_dX_A = I_dX_A + I_dX_A.transpose()
             I_dX_A.data = I_dX_A.data/2.
-            I_dX_B = scipy.sparse.diags(np.ones(self.K)*np.sum(self.I_I_max[I_violation_idx]/Z/self.K)).tocsr()
-            I_dX_I = scipy.sparse.diags(np.ones(self.K)*I_violation_cnt/self.K).tocsr()
-            I_dX = I_dX_A+I_dX_B-I_dX_I
+            I_dX_B = scipy.sparse.diags(np.ones(self.K)*np.sum((-self.I[I_violation_idx]*(Z-1)/Z - I_max_I_sum[I_violation_idx])/self.I[I_violation_idx])/self.K).tocsr()
+            # I_dX_I = scipy.sparse.diags(np.ones(self.K)*np.sum(self.I[I_violation_idx]*(Z-1)/Z - I_max_I_sum[I_violation_idx])/self.K).tocsr()
+            I_dX = I_dX_A+I_dX_B
 
             # get LX(X) and dX_LX(X)
             X_violation_idx = X_offdi.data < (-1. / (Z - 1.))
@@ -171,6 +173,19 @@ class mmwm_scipy(feasibility_check_alg):
             X_dX_A.data = X_dX_A.data/2.
             X_dX_I = scipy.sparse.diags(np.ones(self.K)*X_violation_cnt/self.K).tocsr()
             X_dX = X_dX_A-X_dX_I
+
+            # X_offdi_all = (e_half@e_half.T) /X_trace
+            # X_violation_idx = X_offdi_all < (-1. / (Z - 1.))
+            # X_violation_cnt = np.sum(X_violation_idx)
+            # X_violation_err = np.sum(X_offdi_all[X_violation_idx] * (1.-Z) - 1.)
+            # X_dX_A = np.zeros((self.K,self.K))
+            # X_dX_A[X_violation_idx] = - (Z-1.)
+            # print(X_dX_A)
+            # X_dX_A = X_dX_A + X_dX_A.transpose()
+            # X_dX_A = X_dX_A/2.
+            # X_dX_I = scipy.sparse.diags(np.ones(self.K)*X_violation_cnt/self.K).tocsr()
+            # X_dX = scipy.sparse.csr_matrix(X_dX_A)-X_dX_I
+
 
             sa_T, vh = scipy.sparse.linalg.eigsh(T_dX,k=1,which='LM')
             sa_I, vh = scipy.sparse.linalg.eigsh(I_dX,k=1,which='LM')
@@ -214,18 +229,25 @@ class mmwm_scipy(feasibility_check_alg):
             d_sum = d_sum + LX / tmp_PHO
             X_all = e_half @ e_half.T
             print(X_all[0:5,0:5]/X_trace)
-            print("$$$$$$",np.min(X_all),np.max(np.triu(X_all,k=1)))
-
+            print("$$$$$$",np.min(X_all/X_trace),np.max(np.triu(X_all,k=1)/X_trace))
+            print(I_max_I_sum[I_violation_idx]/I[I_violation_idx])
+            HX = X_offdi.copy()
+            HX.data = ((X_offdi.data * (Z - 1.) + 1.) * self.H.data) / Z
+            I = np.asarray(HX.sum(axis=1)).ravel()/self.I_max
+            print(I[I_violation_idx])
+            print(np.sum(I_violation_idx>1))
             if LX<d_bst or i % 50 == 0:
                 sa, vh = scipy.sparse.linalg.eigsh(dLX,k=1,which='LM')
-                print("++++++",sa[0],tmp_PHO)
+                print("++++++---",sa[0],tmp_PHO)
                 print(i,LX,LX/tmp_PHO/self.K,T_violation_err,I_violation_err,X_violation_err)
                 print(i,self.K,self.H.nnz,T_violation_cnt,I_violation_cnt,X_violation_cnt)
                 print(i,d_sum/i)
                 X = X.todense()
                 print(X[0:5,0:5])
-                print(I[I_violation_idx])
-                print(self.I_I_max[I_violation_idx]/I[I_violation_idx])
+                print("oo",I[I_violation_idx])
+                print(I_max_I_sum[I_violation_idx])
+                print(I_max_I_sum[I_violation_idx])
+                # print(self.I_I_max[I_violation_idx]/I[I_violation_idx])
 
                 if LX<d_bst:
                     d_bst = LX
