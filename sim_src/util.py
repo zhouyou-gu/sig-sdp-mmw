@@ -85,15 +85,27 @@ def timed(f):
 
 
 from line_profiler import LineProfiler
+from functools import wraps
+
+class prof_enabler:
+    enabled = True
+    def DISABLE(self):
+        self.enabled = False
+    def ENABLE(self):
+        self.enabled = True
+
+GLOBAL_PROF_ENABLER = prof_enabler()
+
 def profile(func):
-    from functools import wraps
     @wraps(func)
     def wrapper(*args, **kwargs):
-        prof = LineProfiler()
+        if GLOBAL_PROF_ENABLER.enabled:
+            prof = LineProfiler()
         try:
             return prof(func)(*args, **kwargs)
         finally:
-            prof.print_stats(output_unit=1e-6)
+            if GLOBAL_PROF_ENABLER.enabled:
+                prof.print_stats(output_unit=1e-6)
 
     return wrapper
 
