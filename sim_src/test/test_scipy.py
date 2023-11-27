@@ -13,7 +13,7 @@ CC = a.run_fc_main(10., num_iterations=100)
 time.sleep(3)
 
 def rank1skretch(A):
-    d=10000
+    d=1
     randv = np.random.randn(A.shape[0],d)/math.sqrt(float(d))
     ret = scipy.sparse.linalg.expm_multiply(A.copy(),randv)
     return ret
