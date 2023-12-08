@@ -9,7 +9,7 @@ class env():
     NOISE_FLOOR_DBM = -94.
     BOLTZMANN = 1.3803e-23
     NOISEFIGURE = 13
-    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 1e-2, fre_Hz = 4e9, txp_dbm = 5., min_s_n_ratio = 0.1, packet_bit = 400, bandwidth = 4e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
+    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 1e-2, fre_Hz = 4e9, txp_dbm = 5., min_s_n_ratio = 0.5, packet_bit = 400, bandwidth = 2e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
         self.rand_gen_loc = np.random.default_rng(seed)
         self.rand_gen_fad = np.random.default_rng(seed)
         self.rand_gen_mob = np.random.default_rng(seed)
@@ -116,7 +116,7 @@ class env():
         rxpr_db = self.txp_dbm - self.loss - self.bandwidth_txpr_to_noise_dBm(self.bandwidth)
         self.rxpr = 10 ** (rxpr_db/10.)
 
-        self.rxpr[self.rxpr<0.5] = 0.
+        self.rxpr[self.rxpr<self.min_s_n_ratio] = 0.
 
         self.rxpr = scipy.sparse.csr_matrix(self.rxpr)
 
