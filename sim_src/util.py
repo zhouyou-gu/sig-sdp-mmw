@@ -4,6 +4,7 @@ from datetime import datetime
 import pprint
 from time import time
 
+import matplotlib.pyplot as plt
 
 
 import numpy as np
@@ -149,7 +150,7 @@ class StatusObject:
 
         float_row_data = np.squeeze(float_row_data)
         assert isinstance(float_row_data, np.ndarray)
-        assert float_row_data.ndim == 1
+        assert float_row_data.ndim == 1 or float_row_data.ndim == 0
         if not (key in self.LOGGED_NP_DATA):
             self.LOGGED_NP_DATA[key] = np.zeros((0,float_row_data.size+LOGGED_NP_DATA_HEADER_SIZE))
         assert float_row_data.size + LOGGED_NP_DATA_HEADER_SIZE == self.LOGGED_NP_DATA[key].shape[1]
@@ -191,6 +192,45 @@ class StatusObject:
         else:
             return 0.
 
-    def _debug(self, debug_step=100):
-        self.DEBUG = True
+    def _debug(self, ENABLE ,debug_step=100):
+        self.DEBUG = ENABLE
         self.DEBUG_STEP = debug_step
+
+def GET_LOG_PATH_FOR_SIM_SCRIPT(sim_script_path):
+    OUT_ALL_SIM_FOLDER = os.path.splitext(os.path.basename(sim_script_path))[0]
+    OUT_ALL_SIM_FOLDER = os.path.join(os.path.dirname(os.path.realpath(sim_script_path)), OUT_ALL_SIM_FOLDER)
+    try:
+        os.mkdir(OUT_ALL_SIM_FOLDER)
+    except:
+        pass
+    SIM_NAME_TIME = os.path.splitext(os.path.basename(sim_script_path))[0] + "-" + get_current_time_str() + "-ail"
+    OUT_PER_SIM_FOLDER = os.path.join(OUT_ALL_SIM_FOLDER, SIM_NAME_TIME)
+    return OUT_PER_SIM_FOLDER
+
+def GET_FILE_NAME_FOR_SIM_SCRIPT(file):
+    FILE_NAME = os.path.splitext(os.path.basename(file))[0]
+    return FILE_NAME
+
+def plot_a_array(arr, mavg_n = 20, name= "", script_file = None, postfix = "", idx = None , show = False, save_path = None):
+    fig = plt.figure(figsize=(16, 6), dpi=80)
+    data = np.convolve(arr, np.ones(mavg_n)/mavg_n, mode='valid')
+    if idx:
+        plt.plot(idx[:data.size],data)
+    else:
+        plt.plot(np.arange(start=1, stop=data.size+1),data)
+
+    if show:
+        plt.show()
+    if save_path:
+        if script_file:
+            FIG_NAME = "-".join([GET_FILE_NAME_FOR_SIM_SCRIPT(script_file),name,postfix,get_current_time_str()])
+        else:
+            FIG_NAME = "-".join([name,postfix,get_current_time_str()])
+        try:
+            os.mkdir(os.path.join(save_path,"saved_figures"))
+        except:
+            pass
+        fig.savefig(os.path.join(save_path,"saved_figures",FIG_NAME))
+
+
+
