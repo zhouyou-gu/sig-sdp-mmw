@@ -99,8 +99,7 @@ GLOBAL_PROF_ENABLER = prof_enabler()
 def profile(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if GLOBAL_PROF_ENABLER.enabled:
-            prof = LineProfiler()
+        prof = LineProfiler()
         try:
             return prof(func)(*args, **kwargs)
         finally:
@@ -109,7 +108,7 @@ def profile(func):
 
     return wrapper
 
-
+LOGGED_NP_DATA_HEADER_SIZE = 3
 
 class StatusObject:
     N_STEP = 0
