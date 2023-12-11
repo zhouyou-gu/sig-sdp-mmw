@@ -23,6 +23,6 @@ def rankdskretch(A, d=1):
     ret = scipy.sparse.linalg.expm_multiply(A.copy(),randv)
     return ret
 
-CC = a.run_fc_exphalffc_plug(26, num_iterations=int(1/a.ETA**2)*int(math.log(e.n_sta)),exphalffc=rankdskretch)
+CC = a.run_fc_exphalffc_plug(20, num_iterations=int(1/a.ETA**2)*int(math.log(e.n_sta)),exphalffc=rankdskretch)
 
 plot_a_array(a.LOGGED_NP_DATA["pct"][:,3],name="pct",script_file=__file__,save_path=os.path.dirname(os.path.realpath(__file__)))

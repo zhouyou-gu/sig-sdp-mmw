@@ -2,97 +2,85 @@ import numpy
 import scipy
 import numpy as np
 import math
+
+from sim_src.util import profile
+
+
 class vec_rand_rounding:
     @staticmethod
-    def get_group_vec_using_ehalf_nattempt(Z,A,rxpr,I_max,nattempt=1):
-        best = None
-        best_pct = np.infty
-        best_Z = np.infty
+    def get_group_vec_using_ehalf_nattempt(Z,A,rxpr,I_max,nattempt=10):
         ss = np.asarray(rxpr.todense())
         asso = np.argmax(ss, axis=1)
         H = ss[:,asso]
         H = H.transpose()
         np.fill_diagonal(H, 0.)
+        H = scipy.sparse.csr_matrix(H)
 
-        for i in range(nattempt):
-            g, Z = vec_rand_rounding.get_group_vec_using_ehalf(Z,A,H,I_max)
-            I = vec_rand_rounding.get_interference(H,g)
-            p = vec_rand_rounding.get_violation_pct(I,I_max)
-            if Z <= best_Z:
-                best_Z = Z
-                best_pct = p
-        print(best_Z,best_pct)
-        return best, best_pct
+        gr, Z = vec_rand_rounding.get_group_vec_using_ehalf(Z,A,H,I_max,nattempt)
+        I = vec_rand_rounding.get_interference(H,gr)
+        p = vec_rand_rounding.get_violation_pct(I,I_max)
+
+        return Z, p, gr
 
     @staticmethod
-    def get_group_vec_using_ehalf(Z,A,H,I_max):
+    def get_group_vec_using_ehalf(Z,A,H,I_max,nattempt):
         K = A.shape[0]
-        assigned = np.zeros(K, dtype=bool)
+        not_assigned = np.ones(K, dtype=bool)
         grp_idx = np.zeros(K)
         ZZ = 0
-        for z in range(int(Z-1)):
-            ZZ = ZZ + 1
+        for z in range(int(Z)):
+            ZZ += 1
             idx_best = None
             K_best = 0
-            I_best = 0
-            for t in range(100):
+            for t in range(nattempt):
                 randv = np.random.randn(K,1)
                 randv = np.asarray(scipy.sparse.linalg.expm_multiply(A.copy(),randv)).ravel()
-                rank = np.argsort(randv[np.invert(assigned)])
+                tmp_rank = np.argsort(randv[not_assigned])
+                not_assigned_idx = np.argwhere(not_assigned).ravel()
+                not_assigned_idx_rank = not_assigned_idx[tmp_rank]
+                # print(rank)
                 # add mask
-                # idx = None
-                skip_mask = np.ones(rank.size, dtype=bool)
-                for i in range(rank.size):
-                    skip_mask[i] = False
+                check_mask = np.zeros(not_assigned_idx_rank.size, dtype=bool)
+                for i in range(not_assigned_idx_rank.size):
+                    check_mask[i] = True
                     # do interference check
-                    idx = rank[np.invert(skip_mask)]
-                    # print(idx)
-                    HH = H[:,np.invert(assigned)]
-                    I = np.asarray(HH[:,idx].sum(axis=1)).ravel()
-                    # print(idx.size,I[np.invert(assigned)][idx],I_max[np.invert(assigned)][idx])
-                    vio = I[np.invert(assigned)][idx] > I_max[np.invert(assigned)][idx]
+                    idx = not_assigned_idx_rank[check_mask]
+                    HH = H[idx,:].tocsc()
+                    HH = HH[:,idx].tocsr()
+                    I = np.asarray(HH.sum(axis=1)).ravel()
+                    # print(idx.size,I,I_max[idx])
+                    vio = I > I_max[idx]
                     if np.all(vio == False):
                         continue
                     else:
-                        skip_mask[i] = True
+                        check_mask[i] = False
                         break
-                idx = rank[np.invert(skip_mask)]
+                idx = not_assigned_idx_rank[check_mask]
                 if K_best < idx.size:
                     idx_best = idx
                     K_best = idx.size
 
-            tmp = np.argwhere(np.invert(assigned)).ravel()
-            # print(tmp,idx_best,"+++++++++++++++++++++++++++++")
-            idx_best = tmp[idx_best]
-            # print(idx)
+            # print(idx_best)
             grp_idx[idx_best] = z
-            assigned[idx_best] = True
-            # print(assigned)
-
-            if np.all(assigned == True):
+            not_assigned[idx_best] = False
+            # print(not_assigned)
+            if np.all(not_assigned == False):
                 break
-        grp_idx[np.invert(assigned)] = Z-1
-        return grp_idx, ZZ+1
+        # if not np.all(not_assigned == False):
+        #     grp_idx[not_assigned] = Z-1
+
+        if not np.all(not_assigned == False):
+            grp_idx[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))
 
 
-    @staticmethod
-    def get_group_vec_using_ehalf_tmp(Z,A,H,I_max, th=0.):
-        K = A.shape[0]
-        assigned = np.zeros(K, dtype=bool)
-        grp_idx = np.zeros(K)
-        for z in range(int(Z)):
-            randv = np.random.randn(K,1)
-            randv = randv/np.linalg.norm(randv)
-            randv = np.asarray(scipy.sparse.linalg.expm_multiply(A.copy(),randv)).ravel()
-            idx = randv > th
-            grp_idx[idx] = z
-        return grp_idx, Z
+
+        return grp_idx, ZZ
 
     @staticmethod
     def get_interference(H,g):
         x = (g[:, np.newaxis] == g[np.newaxis, :])
         x = x.astype(float)
-        HH = H * x
+        HH = np.asarray(H.todense()) * x
         return np.sum(HH,axis=1)
 
     @staticmethod

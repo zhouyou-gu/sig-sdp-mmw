@@ -106,7 +106,8 @@ class mmwm_scipy(feasibility_check_alg,StatusObject):
             G = G  - (self.ETA / tmp_PHO) * dLX
             d_sum = d_sum + LX / tmp_PHO
 
-            gr, p = vec_rand_rounding.get_group_vec_using_ehalf_nattempt(Z,G_2.copy(),self.rxpr,self.I_max)
+            real_Z, p, gr = vec_rand_rounding.get_group_vec_using_ehalf_nattempt(Z,G_2.copy(),self.rxpr,self.I_max)
+            self._print(i,"pct++++++++++++++++++",real_Z,p,self.K)
             self._add_np_log("pct",np.asarray(p),g_step=i)
 
 
