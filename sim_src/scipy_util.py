@@ -23,10 +23,22 @@ def csr_scal_rows_inplace(csr: scipy.sparse.csr_matrix, factor):
     csr.data = csr.data * factor
     return csr
 
-def csr_scal_cons_inplace(csr, factor:float):
-    assert factor != 0
-    csr.data = csr.data * factor
-    return csr
+def csr_comp_rows_less_than(csr: scipy.sparse.csr_matrix, th):
+    nnz_per_row = np.diff(csr.indptr)
+    th = np.repeat(th, nnz_per_row)
+    idx = csr.data < th
+    dif = th - csr.data
+    dif_sum = np.sum(dif[idx])
+    return idx, np.sum(idx), dif_sum
+
+def csr_comp_rows_grtr_than(csr: scipy.sparse.csr_matrix, th):
+    nnz_per_row = np.diff(csr.indptr)
+    th = np.repeat(th, nnz_per_row)
+    idx = csr.data > th
+    dif = csr.data - th
+    dif_sum = np.sum(dif[idx])
+    return idx, np.sum(idx), dif_sum
+
 
 def csr_expm_rank_dsketch(csr, K, d, r=10):
     d = int(d)

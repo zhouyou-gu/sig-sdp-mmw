@@ -17,12 +17,17 @@ a.set_st(e.rxpr)
 a._debug(True,1)
 
 
-def rankdskretch(A, d=1):
+def rankdskretch(A, d=20):
     randv = np.random.randn(A.shape[0],d)/math.sqrt(float(d))
-    randv = randv/np.linalg.norm(randv,axis=0)
+    randv = randv/np.linalg.norm(randv,axis=1)[:,None]
     ret = scipy.sparse.linalg.expm_multiply(A.copy(),randv)
     return ret
 
-CC = a.run_fc_exphalffc_plug(20, num_iterations=int(1/a.ETA**2)*int(math.log(e.n_sta)),exphalffc=rankdskretch)
+def scipyexpm(A):
+    return np.asarray(scipy.sparse.linalg.expm(A.copy().tocsc()).todense())
+
+
+CC = a.run_fc_exphalffc_plug(12, num_iterations=int(1/a.ETA**2)*int(math.log(e.n_sta)),exphalffc=rankdskretch)
 
 plot_a_array(a.LOGGED_NP_DATA["pct"][:,3],name="pct",script_file=__file__,save_path=os.path.dirname(os.path.realpath(__file__)))
+plot_a_array(a.LOGGED_NP_DATA["pct_rand"][:,3],name="pct_rand",script_file=__file__,save_path=os.path.dirname(os.path.realpath(__file__)))
