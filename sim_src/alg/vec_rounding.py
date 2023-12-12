@@ -3,6 +3,7 @@ import scipy
 import numpy as np
 import math
 
+from sim_src.scipy_util import csr_scal_rows_inplace
 from sim_src.util import profile
 
 
@@ -28,6 +29,8 @@ class vec_rand_rounding:
         not_assigned = np.ones(K, dtype=bool)
         grp_idx = np.zeros(K)
         ZZ = 0
+        AA = np.asarray(scipy.sparse.linalg.expm(A.copy().tocsc()).todense())
+        X_norm = np.linalg.norm(AA,axis=1)
         for z in range(int(Z)):
             ZZ += 1
             idx_best = None
@@ -35,6 +38,7 @@ class vec_rand_rounding:
             for t in range(nattempt):
                 randv = np.random.randn(K,1)
                 randv = np.asarray(scipy.sparse.linalg.expm_multiply(A.copy(),randv)).ravel()
+                randv = randv/X_norm
                 tmp_rank = np.argsort(randv[not_assigned])
                 not_assigned_idx = np.argwhere(not_assigned).ravel()
                 not_assigned_idx_rank = not_assigned_idx[tmp_rank]
