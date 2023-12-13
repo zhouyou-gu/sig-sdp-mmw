@@ -116,8 +116,8 @@ class mmwm_scipy(feasibility_check_alg,StatusObject):
                 LX += I_violation_err * (I_violation_err/np.abs(sa_I[0])) ** (self.ERR_PHO_RATIO_FACTOR)
 
             if P_violation_err > 0:
-                dLX = dLX + P_dX * (P_violation_err/np.abs(sa_P[0])) ** (self.ERR_PHO_RATIO_FACTOR*2)
-                LX += P_violation_err * (P_violation_err/np.abs(sa_P[0])) ** (self.ERR_PHO_RATIO_FACTOR*2)
+                dLX = dLX + P_dX * (P_violation_err/np.abs(sa_P[0])) ** (self.ERR_PHO_RATIO_FACTOR)
+                LX += P_violation_err * (P_violation_err/np.abs(sa_P[0])) ** (self.ERR_PHO_RATIO_FACTOR)
 
             sa, vh = scipy.sparse.linalg.eigsh(dLX,k=1,which='LM')
             tmp_PHO = np.abs(sa[0])
