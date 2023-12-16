@@ -3,6 +3,7 @@ import math
 import numpy as np
 import scipy
 
+from sim_src.alg.power_adaption import power_adaption
 from sim_src.alg.rounding import rand_rounding
 from sim_src.alg.vec_rounding import vec_rand_rounding
 from sim_src.scipy_util import *
@@ -133,10 +134,19 @@ class mmwm_scipy(feasibility_check_alg,StatusObject):
                 real_Z, p, gr = vec_rand_rounding.get_group_vec_using_ehalf_nattempt(Z,G_2.copy(),self.rxpr,self.I_max)
                 self._print(i,"pct++++++++++++++++++",real_Z,p,self.K)
                 self._add_np_log("pct",np.asarray(p),g_step=i)
+                pct_after_pa, mean_power, _ = power_adaption.get_power_adaption(gr,self.rxpr,self.min_sinr)
+                self._print(i,"pct_after_pa++++++++++++++++++",pct_after_pa,mean_power)
+                self._add_np_log("pct_after_pa",np.asarray(pct_after_pa),g_step=i)
+                self._add_np_log("mean_power",np.asarray(mean_power),g_step=i)
+
             if np.any(rounding_points==i):
                 real_Z, p, gr = vec_rand_rounding.get_group_vec_using_ehalf_nattempt(Z,scipy.sparse.csr_matrix((self.K, self.K)),self.rxpr,self.I_max)
                 self._print(i,"pct++++++++++++++++++",real_Z,p,self.K)
                 self._add_np_log("pct_rand",np.asarray(p),g_step=i)
+                pct_after_pa, mean_power, _ = power_adaption.get_power_adaption(gr,self.rxpr,self.min_sinr)
+                self._print(i,"pct_after_pa_rand++++++++++++++++++",pct_after_pa,mean_power)
+                self._add_np_log("pct_after_pa_rand",np.asarray(pct_after_pa),g_step=i)
+                self._add_np_log("mean_power_rand",np.asarray(mean_power),g_step=i)
 
         G_2 = G.copy()
         G_2.data = G_2.data/2.
@@ -190,5 +200,5 @@ if __name__ == '__main__':
     e = env()
     print(e.min_sinr)
     a = mmwm_scipy(e.n_sta, e.min_sinr)
-    a.set_st(e.rxpr)
+    a.set_st(e.rxpr_hi)
     a.run_fc(10)

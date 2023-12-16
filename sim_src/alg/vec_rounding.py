@@ -9,7 +9,7 @@ from sim_src.util import profile
 
 class vec_rand_rounding:
     @staticmethod
-    def get_group_vec_using_ehalf_nattempt(Z,A,rxpr,I_max,nattempt=10):
+    def get_group_vec_using_ehalf_nattempt(Z,A,rxpr,I_max,nattempt=1):
         ss = np.asarray(rxpr.todense())
         asso = np.argmax(ss, axis=1)
         H = ss[:,asso]

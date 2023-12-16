@@ -13,7 +13,7 @@ from sim_src.util import GLOBAL_PROF_ENABLER, plot_a_array
 GLOBAL_PROF_ENABLER.DISABLE()
 e = env(cell_size=5,seed=0)
 a = mmwm_scipy(e.n_sta,e.min_sinr)
-a.set_st(e.rxpr)
+a.set_st(e.rxpr_hi)
 a._debug(True,1)
 
 
@@ -27,7 +27,15 @@ def scipyexpm(A):
     return np.asarray(scipy.sparse.linalg.expm(A.copy().tocsc()).todense())
 
 
-CC = a.run_fc_exphalffc_plug(12, num_iterations=int(1/a.ETA**2)*int(math.log(e.n_sta)),exphalffc=rankdskretch)
+CC = a.run_fc_exphalffc_plug(25, num_iterations=int(1/a.ETA**2)*int(math.log(e.n_sta)),exphalffc=rankdskretch)
 
 plot_a_array(a.LOGGED_NP_DATA["pct"][:,3],name="pct",script_file=__file__,save_path=os.path.dirname(os.path.realpath(__file__)))
 plot_a_array(a.LOGGED_NP_DATA["pct_rand"][:,3],name="pct_rand",script_file=__file__,save_path=os.path.dirname(os.path.realpath(__file__)))
+
+
+plot_a_array(a.LOGGED_NP_DATA["pct_after_pa"][:,3],name="pct_after_pa",script_file=__file__,save_path=os.path.dirname(os.path.realpath(__file__)))
+plot_a_array(a.LOGGED_NP_DATA["pct_after_pa_rand"][:,3],name="pct_after_pa_rand",script_file=__file__,save_path=os.path.dirname(os.path.realpath(__file__)))
+
+
+plot_a_array(a.LOGGED_NP_DATA["mean_power"][:,3],name="mean_power",script_file=__file__,save_path=os.path.dirname(os.path.realpath(__file__)))
+plot_a_array(a.LOGGED_NP_DATA["mean_power_rand"][:,3],name="mean_power_rand",script_file=__file__,save_path=os.path.dirname(os.path.realpath(__file__)))

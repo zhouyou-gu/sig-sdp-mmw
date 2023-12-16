@@ -16,7 +16,7 @@ np.set_printoptions(precision=1)
 
 e = env(cell_size=5,seed=int(time.time()))
 a = mmwm_scipy(e.n_sta,e.min_sinr)
-a.set_st(e.rxpr)
+a.set_st(e.rxpr_hi)
 
 
 

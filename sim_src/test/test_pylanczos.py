@@ -13,7 +13,7 @@ from sim_src.util import profile
 e = env(cell_size=5,seed=int(time.time()))
 # print(e.min_sinr,e.n_sta,e.rxpr)
 a = mmwm_scipy(e.n_sta,e.min_sinr)
-a.set_st(e.rxpr)
+a.set_st(e.rxpr_hi)
 
 def compute_back_diff(eigval,eigvec,orign):
     tmp = eigvec @ np.diag(eigval) @ eigvec.T
