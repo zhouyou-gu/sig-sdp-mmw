@@ -37,6 +37,7 @@ class env():
 
         self.ap_locs = None
         self.sta_locs = None
+        self.sta_dirs = None
 
         self.min_sinr = None
         self.loss = None
@@ -44,6 +45,7 @@ class env():
 
         self._config_ap_locs()
         self._config_sta_locs()
+        self._config_sta_dirs()
 
         self._compute_min_sinr()
 
@@ -58,10 +60,33 @@ class env():
     def _config_sta_locs(self):
         self.sta_locs = self.rand_gen_loc.uniform(low=0.,high=self.grid_edge,size=(self.n_sta,2))
 
+    def _config_sta_dirs(self):
+        dd = self.rand_gen_mob.standard_normal(size=(self.n_sta,2))
+        self.sta_dirs = dd/np.linalg.norm(dd,axis=1,keepdims=True)
+
+    def _get_random_dir(self):
+        dd = self.rand_gen_mob.standard_normal(2)
+        return dd/np.linalg.norm(dd)
+
     def _compute_min_sinr(self):
         min_sinr_db = env.bisection_method(self.packet_bit,self.bandwidth,self.slot_time, self.max_err)
         self.min_sinr = env.db_to_dec(min_sinr_db)
         return self.min_sinr
+
+    def rand_user_mobility(self, mobility_in_meter_s = 0., t_s = 0, resolution_s = 1e-1):
+
+        if mobility_in_meter_s == 0. or t_s == 0.:
+            return
+        n_step = int(t_s/resolution_s)
+        for n in range(n_step):
+            for i in range(self.n_sta):
+                dd = self.sta_dirs[i] * mobility_in_meter_s * resolution_s
+                x = self.sta_locs[i][0] + dd[0]
+                y = self.sta_locs[i][1] + dd[1]
+                if np.linalg.norm(np.array((x,y)),np.inf) <= self.grid_edge:
+                    self.sta_locs[i] = np.array([x,y])
+                else:
+                    self.sta_dirs[i] = self._get_random_dir()
 
     @classmethod
     def bandwidth_txpr_to_noise_dBm(cls, B):
@@ -131,15 +156,28 @@ class env():
         return
 
 if __name__ == '__main__':
-    e = env(cell_size=5)
+
+    dd = np.random.randn(10,2)
+    dd = dd/np.linalg.norm(dd,axis=1,keepdims=True)
+    print(dd)
+
+    # exit(0)
+    e = env(cell_size=5,seed=2)
     print(e.ap_locs)
     print(e.sta_locs)
     print("n_sta",e.n_sta)
     print("n_ap",e.n_ap)
+
+
+
     print(e._compute_state())
-    # print(np.linalg.norm(e.ap_locs[3]-e.sta_locs[6]))
-    # print(20. * math.log10(4e9/1e6) + 16 - 28 + 28 * np.log10(10*1.47))
-    # print(10 * math.log10(1e6))
+
     print(e._compute_min_sinr())
 
     e.check_cell_edge_snr_err()
+    a= e.sta_locs[0].copy()
+    print(e.sta_locs[0])
+    e.rand_user_mobility(mobility_in_meter_s=1,t_s=1)
+    b= e.sta_locs[0].copy()
+    print(e.sta_locs[0])
+    print(np.linalg.norm(a-b),a-b)
