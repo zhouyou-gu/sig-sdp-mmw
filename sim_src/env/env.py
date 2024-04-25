@@ -90,8 +90,6 @@ class env():
 
     @classmethod
     def bandwidth_txpr_to_noise_dBm(cls, B):
-        # Nt = cls.BOLTZMANN * 290 * B
-        # return 10*math.log10(Nt) + 30 + env.NOISEFIGURE
         return env.NOISE_FLOOR_DBM
 
     @staticmethod
@@ -175,9 +173,9 @@ if __name__ == '__main__':
     print(e._compute_min_sinr())
 
     e.check_cell_edge_snr_err()
-    a= e.sta_locs[0].copy()
+    a = e.sta_locs[0].copy()
     print(e.sta_locs[0])
     e.rand_user_mobility(mobility_in_meter_s=1,t_s=1)
-    b= e.sta_locs[0].copy()
+    b = e.sta_locs[0].copy()
     print(e.sta_locs[0])
     print(np.linalg.norm(a-b),a-b)
