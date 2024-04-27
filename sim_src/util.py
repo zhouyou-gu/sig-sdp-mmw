@@ -196,6 +196,29 @@ class StatusObject:
         self.DEBUG = ENABLE
         self.DEBUG_STEP = debug_step
 
+
+class NP_LOGGER:
+    def __init__(self,path,name):
+        self.path = path
+        self.name = name
+
+class TIMED_OBJECT:
+    def __init__(self):
+        self.timers = []
+        self.ntimer = 0
+    def _get_tic(self):
+        self.ntimer += 1
+        self.timers.append((self.ntimer,time()))
+        return self.ntimer
+    def _get_tim(self,tic_id):
+        for t in self.timers:
+            if t[0] == tic_id:
+                tim = t[0]
+                self.timers.remove(t)
+                return (time()-tim)*1e6
+        raise Exception("no timer is found.")
+
+
 def GET_LOG_PATH_FOR_SIM_SCRIPT(sim_script_path):
     OUT_ALL_SIM_FOLDER = os.path.splitext(os.path.basename(sim_script_path))[0]
     OUT_ALL_SIM_FOLDER = os.path.join(os.path.dirname(os.path.realpath(sim_script_path)), OUT_ALL_SIM_FOLDER)
