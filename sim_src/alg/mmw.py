@@ -7,34 +7,38 @@ from sim_src.scipy_util import csr_scal_rows_inplace
 
 
 class mmw:
-    def __init__(self, D = 10, nit = 100):
+    def __init__(self, nit=100, D=10, alpha=1., eta=0.1):
         self.nit = nit
         self.D = D
-        pass
+        self.alpha = alpha
+        self.eta = eta
 
     def run_with_state(self, Z, state):
-        pass
+        return self._run(Z, state)
 
-
-    def rounding(self,Z,gX):
+    def rounding(self, Z, gX):
         pass
+    def _process_state(self, Z, S_gain, Q_asso, h_max):
+        K = S_gain.shape[0]
+        S_gain_T_no_diag = S_gain.copy().transponse().setdiag(0)
+        S_sum = S_gain_T_no_diag.sum(1)
+
+        s_max = S_gain.diagonal()
+        S_gain_T_no_diag.data = S_gain_T_no_diag.data ** 2
+        norm_H = S_gain_T_no_diag.sum(1) ** (1/2) * (Z-1)/(2*Z) + np.abs(1/K*h_max-1/K/Z*S_sum)
+
+        return S_gain_T_no_diag, s_max, Q_asso, h_max, S_sum, norm_H
 
     def _run(self,Z,state):
-        K = state[0].shape[0]
+        K = state.shape[0]
 
-        S_gain = scipy.sparse.csr_matrix((K, K))
-        Q_asso = scipy.sparse.csr_matrix((K, K))
-        nz_idx_x_gain = state[0]
-        nz_idx_y_gain = state[0]
-        nz_idx_x_asso = state[0]
-        nz_idx_y_asso = state[0]
+        S_gain_T_no_diag, s_max, Q_asso, h_max, S_sum, norm_H = self._process_state(Z,state[0],state[1],state[0])
 
-        E_asso = self._get_nE_asso(state)
+        nz_idx_gain_x, nz_idx_gain_y = S_gain_T_no_diag.nonzero()
+        nz_idx_asso_x, nz_idx_asso_y = Q_asso.nonzero()
+
+        E_asso = Q_asso.getnnz()/2
         C = E_asso+2*K
-
-        AD = scipy.sparse.diags(np.zeros(K)).tocsr()
-        AF = scipy.sparse.csr_matrix((K, K))
-        AH = scipy.sparse.csr_matrix((K, K))
 
         YD = np.ones(K)/float(C)
         YF = np.ones(E_asso)/float(C)
@@ -50,13 +54,14 @@ class mmw:
             LD = (scipy.sparse.diags(YD)-np.sum(YD)/K*scipy.sparse.diags(np.ones(K)))/(1.-1./K)
 
             ## YF, AF -> LF
-            YF_m = scipy.sparse.coo_matrix((YF, (nz_idx_x_asso, nz_idx_y_asso)), shape=(K, K)).tocsr()
+            YF_m = scipy.sparse.coo_matrix((YF, (nz_idx_asso_x, nz_idx_asso_y)), shape=(K, K)).tocsr()
             YF_m = YF_m + YF_m.transpose()
             LF = (YF_m-np.sum(YF)/(K*(Z-1))*scipy.sparse.diags(np.ones(K)))/(1./2.+1./(K(Z-1)))
 
             ## YH, AH -> LH
-            YH_m = scipy.sparse.coo_matrix((YH, (nz_idx_x_asso, nz_idx_y_asso)), shape=(K, K)).tocsr()
-            LH = S_gain.copy()
+            LH = S_gain_T_no_diag.copy()
+            LH = csr_scal_rows_inplace(LH,YH)
+            LH = LH + LH.transpose()
             LH.data = LH.data*(Z-1)/(2*Z)
             ## todo LH
 
@@ -86,7 +91,7 @@ class mmw:
             eF = (X_offdi+1./(Z-1))/(1./(K*(Z-1))+1./2.)
 
             ## AH, X -> eH
-            eH = (X_offdi+1./(Z-1))/(1./(K*(Z-1))+1./2.)
+            eH = X_offdi
 
             ## eD, eF, eH, e_accu -> YD, YF, YH, e_accu
             e_accu = e_accu + (eD + eF + eH)*self.eta
@@ -102,3 +107,7 @@ class mmw:
         randv = randv/np.linalg.norm(randv,axis=1)[:,None]
         ret = scipy.sparse.linalg.expm_multiply(L.copy(),randv)
         return ret
+
+
+if __name__ == '__main__':
+    pass

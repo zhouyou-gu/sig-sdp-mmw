@@ -13,7 +13,7 @@ class mmwm_scipy(StatusObject):
     ETA = 0.1
     OFFSET = 0.
     ERR_PHO_RATIO_FACTOR = 10
-    def __init__(self, K, min_sinr, sinr_offset):
+    def __init__(self, K, min_sinr, sinr_offset=1.):
         self.K = K
         self.min_sinr = min_sinr
 

@@ -145,6 +145,85 @@ class env():
 
         return self.rxpr_hi
 
+    def _compute_state_real(self):
+        dis = scipy.spatial.distance.cdist(self.sta_locs,self.ap_locs)
+        self.loss = env.fre_dis_to_loss_dB(self.fre_Hz,dis)
+
+        rxpr_db = self.txp_dbm_hi - self.loss - self.bandwidth_txpr_to_noise_dBm(self.bandwidth)
+        self.rxpr_hi = 10 ** (rxpr_db / 10.)
+
+        self.rxpr_hi = scipy.sparse.csr_matrix(self.rxpr_hi)
+
+        return self.rxpr_hi
+
+    def _generate_S_Q_hmax(self, rxpr)-> (scipy.sparse.csr_matrix, scipy.sparse.csr_matrix):
+        K = rxpr.shape[0]
+        A = rxpr.shape[1]
+        rxpr = rxpr
+        ss = rxpr.toarray()
+        asso = np.argmax(ss, axis=1)
+        asso_indicator = np.zeros((K,A))
+        asso_indicator[np.arange(K),asso] = 1
+        asso_indicator = asso_indicator.astype(bool)
+        Q_asso = scipy.sparse.csr_matrix((K, K))
+
+        for a in range(A):
+            idx = np.where(asso_indicator[:,a] >= 0)[0]
+            Q_asso[idx,idx] = 0
+        Q_asso.setdiag(0.)
+        Q_asso.sort_indices()
+
+        S_gain = rxpr[:, asso]
+        S_gain.eliminate_zeros()
+        S_gain.sort_indices()
+
+        h_max = S_gain.diagonal()/self._compute_min_sinr() - 1.
+
+        return S_gain, Q_asso, h_max
+
+    def evaluate_sinr(self,z,Z):
+        rxpr = self._compute_state_real()
+        S_gain, _, _ = self._generate_S_Q_hmax(rxpr)
+        S_gain = np.array(S_gain.toarray())
+        S_gain_no_diag = S_gain.copy().transpose()
+        np.fill_diagonal(S_gain_no_diag, 0)
+
+        K = rxpr.shape[0]
+        sinr = np.zeros(K)+1e-3
+        for zz in range(Z):
+            kidx = z==zz
+            kidx = np.arange(K)[kidx]
+            signal = S_gain.diagonal()[kidx]
+            interference = S_gain_no_diag.sum(axis=1)
+            sinr[kidx] = signal/(interference+1)
+
+        ss = rxpr.toarray()
+        asso = np.argmax(ss, axis=1)
+
+        A = np.max(asso)
+        for a in range(A):
+            for zz in range(Z):
+                kidx = (asso == a) and (z==zz)
+                max_sinr = np.max(sinr[kidx])
+                max_sinr_idx = np.argmax(sinr[kidx])
+                sinr[kidx] = 0
+                sinr[max_sinr_idx] = max_sinr
+        return sinr
+
+    def evaluate_bler(self,z,Z):
+        sinr = self.evaluate_sinr(z,Z)
+        K = sinr.size
+        bler = np.zeros(K)
+        for k in range(K):
+            bler[k] = env.polyanskiy_model(sinr,self.packet_bit,self.bandwidth,self.slot_time)
+        return bler
+    def evaluate_pckl(self,z,Z):
+        bler = self.evaluate_bler(z,Z)
+        K = bler.size
+        pckl = np.random.choice([0, 1], size=(K,), p=[bler, 1-bler])
+        return pckl
+
+
     def check_cell_edge_snr_err(self):
         l = env.fre_dis_to_loss_dB(e.fre_Hz,self.cell_edge/2*math.sqrt(2))
         s_db = self.txp_dbm_hi - l - env.bandwidth_txpr_to_noise_dBm(e.bandwidth)
