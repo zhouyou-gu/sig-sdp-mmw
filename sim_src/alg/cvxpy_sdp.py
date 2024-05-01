@@ -7,9 +7,9 @@ import cvxpy as cp
 from sim_src.alg.power_adaption import power_adaption
 from sim_src.alg.vec_rounding import vec_rand_rounding
 from sim_src.scipy_util import *
-from sim_src.util import profile, StatusObject
+from sim_src.util import profile, STATS_OBJECT
 
-class cvxpy_sdp(StatusObject):
+class cvxpy_sdp(STATS_OBJECT):
     def __init__(self, K, min_sinr):
         self.K = K
         self.min_sinr = min_sinr

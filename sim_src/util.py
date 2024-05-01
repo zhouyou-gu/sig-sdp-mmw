@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 import pprint
 from time import time
-
+import csv
 import matplotlib.pyplot as plt
 
 
@@ -111,7 +111,7 @@ def profile(func):
 
 LOGGED_NP_DATA_HEADER_SIZE = 3
 
-class StatusObject:
+class STATS_OBJECT:
     N_STEP = 0
     DISABLE_ALL_DEBUG = False
     DEBUG_STEP = 100
@@ -121,6 +121,7 @@ class StatusObject:
 
     INIT_MOVING_AVERAGE = False
     INIT_LOGGED_NP_DATA = False
+    INIT_TIMEING_OBJECT = False
 
     MOVING_AVERAGE_DICT = {}
     MOVING_AVERAGE_DICT_N_STEP = {}
@@ -163,12 +164,12 @@ class StatusObject:
             pprint.pprint(vars(self))
 
     def _print(self, *args, **kwargs):
-        if self.DEBUG and not StatusObject.DISABLE_ALL_DEBUG and (
+        if self.DEBUG and not STATS_OBJECT.DISABLE_ALL_DEBUG and (
                 self.N_STEP % self.DEBUG_STEP == 0 or self.N_STEP % self.DEBUG_STEP == 1 or self.N_STEP % self.DEBUG_STEP == 2):
             print(("%6d\t" % self.N_STEP) + " ".join(map(str, args)), **kwargs)
 
     def _printa(self, *args, **kwargs):
-        if self.DEBUG and not StatusObject.DISABLE_ALL_DEBUG:
+        if self.DEBUG and not STATS_OBJECT.DISABLE_ALL_DEBUG:
             print(("%6d\t" % self.N_STEP) + ("%10s\t" % self.__class__.__name__) + " ".join(map(str, args)), **kwargs)
 
     def _moving_average(self, key, new_value):
@@ -196,20 +197,16 @@ class StatusObject:
         self.DEBUG = ENABLE
         self.DEBUG_STEP = debug_step
 
-
-class NP_LOGGER:
-    def __init__(self,path,name):
-        self.path = path
-        self.name = name
-
-class TIMED_OBJECT:
-    def __init__(self):
-        self.timers = []
-        self.ntimer = 0
     def _get_tic(self):
+        if not self.INIT_TIMEING_OBJECT:
+            self.timers = []
+            self.ntimer = 0
+            self.INIT_TIMEING_OBJECT = True
+
         self.ntimer += 1
         self.timers.append((self.ntimer,time()))
         return self.ntimer
+
     def _get_tim(self,tic_id):
         for t in self.timers:
             if t[0] == tic_id:
@@ -217,6 +214,40 @@ class TIMED_OBJECT:
                 self.timers.remove(t)
                 return (time()-tim)*1e6
         raise Exception("no timer is found.")
+
+
+
+class CSV_WRITER_OBJECT:
+    def __init__(self, path=None):
+        self.path = path
+        self.files = {}
+        self.writers = {}
+
+    def log_one_scalar(self, data_name, iteration, value, g_iteration = 0):
+        if self.path is None:
+            return
+
+        if data_name not in self.files.keys():
+            self.files[data_name] = open(os.path.join(self.path,data_name), 'w', newline='')
+            self.writers[data_name] = csv.writer(self.files[data_name])
+
+        self.files[data_name].writerow([g_iteration, iteration, value])
+        self.writers[data_name].flush()
+
+    def log_mul_scalar(self, data_name, iteration, values, g_iteration = 0):
+        if self.path is None:
+            return
+
+        if data_name not in self.files.keys():
+            self.files[data_name] = open(os.path.join(self.path,data_name), 'w', newline='')
+            self.writers[data_name] = csv.writer(self.files[data_name])
+
+        self.files[data_name].writerow([g_iteration, iteration].append([v for v in values]))
+        self.writers[data_name].flush()
+    def close(self):
+        for file in self.files.values():
+            file.close()
+
 
 
 def GET_LOG_PATH_FOR_SIM_SCRIPT(sim_script_path):

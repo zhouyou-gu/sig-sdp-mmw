@@ -6,10 +6,10 @@ import scipy
 from sim_src.alg.power_adaption import power_adaption
 from sim_src.alg.vec_rounding import vec_rand_rounding
 from sim_src.scipy_util import *
-from sim_src.util import profile, StatusObject
+from sim_src.util import profile, STATS_OBJECT
 
 
-class mmwm_scipy(StatusObject):
+class mmwm_scipy(STATS_OBJECT):
     ETA = 0.1
     OFFSET = 0.
     ERR_PHO_RATIO_FACTOR = 10
