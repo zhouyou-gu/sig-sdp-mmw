@@ -16,7 +16,7 @@ class binary_search_relaxation(alg_interface,STATS_OBJECT):
         S.sort_indices()
         nnz_per_row = np.diff(S.indptr)
         ub = np.max(nnz_per_row)+1
-        nnz_per_row = state[1].indptr
+        nnz_per_row = np.diff(state[1].indptr)
         lb = np.max(nnz_per_row)+1
         return  lb, ub
 
@@ -29,14 +29,14 @@ class binary_search_relaxation(alg_interface,STATS_OBJECT):
         bs_tic = self._get_tic()
         Z, gX, it = self.search(left, right, state)
         tim = self._get_tim(bs_tic)
-        self._add_np_log("bs_iters",0,np.array([left,right,Z,it,tim]))
+        self._add_np_log("bs_search",0,np.array([left,right,Z,it,tim]))
 
         rd_tic = self._get_tic()
-        z_vec, Z_fin = self.feasibility_check_alg.rounding(Z,gX,state)
+        z_vec, Z_fin, remainder = self.feasibility_check_alg.rounding(Z,gX,state)
         tim = self._get_tim(rd_tic)
         self._add_np_log("bs_round",0,np.array([left,right,Z_fin,tim]))
 
-        return z_vec, Z_fin
+        return z_vec, Z_fin, remainder
 
     def search(self, left, right, state):
         it = 0
@@ -48,6 +48,7 @@ class binary_search_relaxation(alg_interface,STATS_OBJECT):
                 left = mid+1
             else:
                 right = mid
+            print(left,right)
             if left >= right:
                 break
 

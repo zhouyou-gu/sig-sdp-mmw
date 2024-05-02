@@ -9,7 +9,7 @@ class env():
     NOISE_FLOOR_DBM = -94.
     BOLTZMANN = 1.3803e-23
     NOISEFIGURE = 13
-    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 1e-2, fre_Hz = 4e9, txp_dbm_hi = 5.,  min_s_n_ratio = 0.5, packet_bit = 400, bandwidth = 2e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
+    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 5e-2, fre_Hz = 4e9, txp_dbm_hi = 5.,  min_s_n_ratio = 0.5, packet_bit = 400, bandwidth = 2e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
         self.rand_gen_loc = np.random.default_rng(seed)
         self.rand_gen_fad = np.random.default_rng(seed)
         self.rand_gen_mob = np.random.default_rng(seed)
@@ -41,15 +41,12 @@ class env():
 
         self.min_sinr = None
         self.loss = None
-        self.rxpr_hi = None
 
         self._config_ap_locs()
         self._config_sta_locs()
         self._config_sta_dirs()
 
         self._compute_min_sinr()
-
-        self._compute_state()
 
     def _config_ap_locs(self):
         x=np.linspace(0 + self.ap_offset, self.grid_edge - self.ap_offset, self.cell_size)
@@ -137,54 +134,55 @@ class env():
         self.loss = env.fre_dis_to_loss_dB(self.fre_Hz,dis)
 
         rxpr_db = self.txp_dbm_hi - self.loss - self.bandwidth_txpr_to_noise_dBm(self.bandwidth)
-        self.rxpr_hi = 10 ** (rxpr_db / 10.)
+        rxpr_hi = 10 ** (rxpr_db / 10.)
 
-        self.rxpr_hi[self.rxpr_hi < self.min_s_n_ratio] = 0.
+        rxpr_hi[rxpr_hi < self.min_s_n_ratio] = 0.
 
-        self.rxpr_hi = scipy.sparse.csr_matrix(self.rxpr_hi)
+        rxpr_hi = scipy.sparse.csr_matrix(rxpr_hi)
 
-        return self.rxpr_hi
+        return rxpr_hi
 
     def _compute_state_real(self):
         dis = scipy.spatial.distance.cdist(self.sta_locs,self.ap_locs)
         self.loss = env.fre_dis_to_loss_dB(self.fre_Hz,dis)
 
         rxpr_db = self.txp_dbm_hi - self.loss - self.bandwidth_txpr_to_noise_dBm(self.bandwidth)
-        self.rxpr_hi = 10 ** (rxpr_db / 10.)
+        rxpr_hi = 10 ** (rxpr_db / 10.)
 
-        self.rxpr_hi = scipy.sparse.csr_matrix(self.rxpr_hi)
+        rxpr_hi = scipy.sparse.csr_matrix(rxpr_hi)
 
-        return self.rxpr_hi
+        return rxpr_hi
 
-    def _generate_S_Q_hmax(self, rxpr)-> (scipy.sparse.csr_matrix, scipy.sparse.csr_matrix):
+    def generate_S_Q_hmax(self)-> (scipy.sparse.csr_matrix, scipy.sparse.csr_matrix):
+        rxpr = self._compute_state()
         K = rxpr.shape[0]
         A = rxpr.shape[1]
-        rxpr = rxpr
-        ss = rxpr.toarray()
+        ss = rxpr.tolil().toarray()
         asso = np.argmax(ss, axis=1)
         asso_indicator = np.zeros((K,A))
-        asso_indicator[np.arange(K),asso] = 1
+        asso_indicator[np.arange(K), asso] = 1
+
         asso_indicator = asso_indicator.astype(bool)
-        Q_asso = scipy.sparse.csr_matrix((K, K))
+        Q_asso = scipy.sparse.lil_matrix((K, K))
 
         for a in range(A):
-            idx = np.where(asso_indicator[:,a] >= 0)[0]
-            Q_asso[idx,idx] = 0
+            idx = np.where(asso_indicator[:,a] == 1)[0]
+            Q_asso[np.ix_(idx, idx)] = 1
+        Q_asso = Q_asso.tocsr()
         Q_asso.setdiag(0.)
         Q_asso.sort_indices()
-
+        Q_asso.eliminate_zeros()
         S_gain = rxpr[:, asso]
         S_gain.eliminate_zeros()
         S_gain.sort_indices()
 
         h_max = S_gain.diagonal()/self._compute_min_sinr() - 1.
-
         return S_gain, Q_asso, h_max
 
     def evaluate_sinr(self,z,Z):
         rxpr = self._compute_state_real()
-        S_gain, _, _ = self._generate_S_Q_hmax(rxpr)
-        S_gain = np.array(S_gain.toarray())
+        S_gain, _, _ = self.generate_S_Q_hmax(rxpr)
+        S_gain = np.array(S_gain.tolil().toarray())
         S_gain_no_diag = S_gain.copy().transpose()
         np.fill_diagonal(S_gain_no_diag, 0)
 
@@ -197,7 +195,7 @@ class env():
             interference = S_gain_no_diag.sum(axis=1)
             sinr[kidx] = signal/(interference+1)
 
-        ss = rxpr.toarray()
+        ss = rxpr.tolil().toarray()
         asso = np.argmax(ss, axis=1)
 
         A = np.max(asso)

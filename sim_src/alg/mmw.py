@@ -3,12 +3,13 @@ import math
 import numpy as np
 import scipy
 
+from sim_src.alg.sdp_solver import sdp_solver
 from sim_src.scipy_util import csr_scal_rows_inplace
-from sim_src.util import STATS_OBJECT
+from sim_src.util import STATS_OBJECT, profile
 
 
-class mmw(STATS_OBJECT):
-    def __init__(self, nit=100, D=10, alpha=1., eta=0.1):
+class mmw(STATS_OBJECT,sdp_solver):
+    def __init__(self, nit=100, D=5, alpha=1., eta=0.1):
         self.nit = nit
         self.D = D
         self.alpha = alpha
@@ -24,7 +25,8 @@ class mmw(STATS_OBJECT):
 
     def _process_state(self, Z, S_gain, Q_asso, h_max):
         K = S_gain.shape[0]
-        S_gain_T_no_diag = S_gain.copy().transponse().setdiag(0)
+        S_gain_T_no_diag = S_gain.copy().transpose()
+        S_gain_T_no_diag.setdiag(0)
         S_sum = np.asarray(S_gain_T_no_diag.sum(axis=1)).ravel()
 
         s_max = S_gain.diagonal()
@@ -34,31 +36,32 @@ class mmw(STATS_OBJECT):
 
         return S_gain_T_no_diag, s_max, Q_asso, h_max, S_sum, norm_H
 
+    @profile
     def _run(self,Z,state):
         ### state process
         sp_tic = self._get_tic()
-        K = state.shape[0]
+        K = state[0].shape[0]
 
         S_gain_T_no_diag, s_max, Q_asso, h_max, S_sum, norm_H = self._process_state(Z,state[0],state[1],state[2])
 
 
         SSS = S_gain_T_no_diag + S_gain_T_no_diag.transpose()
-        SSS = scipy.sparse.triu(SSS)
+        SSS = scipy.sparse.triu(SSS).tocsr()
         SSS.eliminate_zeros()
         SSS.sort_indices()
         nz_idx_gain_x_ut, nz_idx_gain_y_ut = SSS.nonzero()
-        nz_idx_asso_x, nz_idx_asso_y = scipy.sparse.triu(Q_asso).nonzero()
+        nz_idx_asso_x, nz_idx_asso_y = scipy.sparse.triu(Q_asso,k=1).tocsr().nonzero()
 
-        E_asso = Q_asso.getnnz()/2
+        E_asso = int(Q_asso.getnnz()/2)
         C = E_asso+2*K
 
         YD = np.ones(K)/float(C)
         YF = np.ones(E_asso)/float(C)
-        YH = np.ones(E_asso)/float(C)
+        YH = np.ones(K)/float(C)
 
         e_accu = np.zeros(C)
         L_accu = scipy.sparse.csr_matrix((K, K))
-
+        e_weighted = 0.
         tim = self._get_tim(sp_tic)
         self._add_np_log("mmw_state_process",0,np.array([Z,K,tim]))
 
@@ -75,7 +78,7 @@ class mmw(STATS_OBJECT):
             ## YF, AF -> LF
             YF_m = scipy.sparse.coo_matrix((YF, (nz_idx_asso_x, nz_idx_asso_y)), shape=(K, K)).tocsr()
             YF_m = (YF_m + YF_m.transpose())/2.
-            LF = (YF_m+np.sum(YF)/(K*(Z-1))*scipy.sparse.diags(np.ones(K)))/(1./2.+1./(K(Z-1)))
+            LF = (YF_m+np.sum(YF)/(K*(Z-1))*scipy.sparse.diags(np.ones(K)))/(1./2.+1./(K*(Z-1)))
 
             ## YH, AH -> LH
             LH = S_gain_T_no_diag.copy()
@@ -85,7 +88,7 @@ class mmw(STATS_OBJECT):
             LH = LH - np.sum((1./K*h_max-1/(K*Z)*S_sum)*YH/norm_H)*scipy.sparse.diags(np.ones(K))
 
             ## LD, LF, LH, L_accu -> L_accu
-            L_accu = L_accu + (LD + LF + LH)*self.eta
+            L_accu = L_accu - (LD + LF + LH)*self.eta
 
             tim = self._get_tim(tic_loss)
             self._add_np_log("mmw_loss",i,np.array([Z,K,tim]))
@@ -116,21 +119,26 @@ class mmw(STATS_OBJECT):
             ### compute dual
             tic_dual = self._get_tic()
             ## AD, X -> eD
-            eD = (X_mdiag-1.)/(1.-1./K)
+            eD = (X_mdiag.data-1.)/(1.-1./K)
 
             ## AF, X -> eF
             QQQ = scipy.sparse.triu(X_offdi)*scipy.sparse.triu(Q_asso)
             QQQ.eliminate_zeros()
             QQQ.sort_indices()
 
-            eF = (X_offdi[nz_idx_asso_x,nz_idx_asso_y]+1./(Z-1))/(1./(K*(Z-1))+1./2.)
+            eF = (np.asarray(X_offdi[nz_idx_asso_x,nz_idx_asso_y]).ravel()+1./(Z-1))/(1./(K*(Z-1))+1./2.)
 
             ## AH, X -> eH
             AHX = S_gain_T_no_diag*X_offdi
             eH = (np.asarray(AHX.sum(axis=1)).ravel()*(Z-1)/Z - (h_max-1/Z * S_sum))/norm_H
 
             ## eD, eF, eH, e_accu -> YD, YF, YH, e_accu
-            e_accu = e_accu + (eD + eF + eH)*self.eta
+            e_accu[0:K] += eD*self.eta
+            e_accu[K:K+E_asso] += eF*self.eta
+            e_accu[K+E_asso:2*K+K+E_asso] += eH*self.eta
+
+            e_weighted += np.sum(eD*YD) + np.sum(eF*YF) + np.sum(eH*YH)
+
             Y = scipy.special.softmax(e_accu)
             YD = Y[0:K]
             YF = Y[K:K+E_asso]
@@ -143,7 +151,8 @@ class mmw(STATS_OBJECT):
             self._add_np_log("mmw_per_it",i,np.array([Z,K,tim]))
 
 
-        return e_accu/self.eta
+        return True, X_half/np.linalg.norm(X_half,axis=1,keepdims=True)
+
     @staticmethod
     def expm_half_randsk(L,D):
         randv = np.random.randn(L.shape[0],D)/math.sqrt(float(D))

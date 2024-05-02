@@ -144,7 +144,7 @@ class STATS_OBJECT:
             data_path = os.path.join(path,data_name)
             np.savetxt(data_path, self.LOGGED_NP_DATA[key] , delimiter=',')
 
-    def _add_np_log(self, key, float_row_data, g_step=0):
+    def _add_np_log(self, key, step, float_row_data, g_step=0):
         if not self.INIT_LOGGED_NP_DATA:
             self.LOGGED_NP_DATA = {}
             self.INIT_LOGGED_NP_DATA = True
@@ -155,7 +155,7 @@ class STATS_OBJECT:
         if not (key in self.LOGGED_NP_DATA):
             self.LOGGED_NP_DATA[key] = np.zeros((0,float_row_data.size+LOGGED_NP_DATA_HEADER_SIZE))
         assert float_row_data.size + LOGGED_NP_DATA_HEADER_SIZE == self.LOGGED_NP_DATA[key].shape[1]
-        s_t = np.array([g_step,self.N_STEP,time()])
+        s_t = np.array([g_step,step,time()])
         data = np.hstack((s_t,float_row_data))
         self.LOGGED_NP_DATA[key] = np.vstack((self.LOGGED_NP_DATA[key],data))
 
