@@ -32,7 +32,7 @@ class mmw(STATS_OBJECT,sdp_solver):
         s_max = S_gain.diagonal()
         S_gain_T_no_diag_square = S_gain_T_no_diag.copy()
         S_gain_T_no_diag_square.data = S_gain_T_no_diag_square.data ** 2
-        norm_H = (np.asarray(S_gain_T_no_diag_square.sum(axis=1)).ravel())**(1/2) * (Z-1)/(2*Z) + np.abs(1/K*h_max-1/K/Z*S_sum)
+        norm_H = np.sqrt(np.asarray(S_gain_T_no_diag_square.sum(axis=1)).ravel()) * (Z-1)/(2*Z) + np.abs(1/K*h_max-1/K/Z*S_sum)
 
         return S_gain_T_no_diag, s_max, Q_asso, h_max, S_sum, norm_H
 
@@ -64,6 +64,9 @@ class mmw(STATS_OBJECT,sdp_solver):
         e_weighted = 0.
         tim = self._get_tim(sp_tic)
         self._add_np_log("mmw_state_process",0,np.array([Z,K,tim]))
+
+        X_mdiag_avg_data = np.zeros(K)
+        X_offdi_avg_data = np.zeros(nz_idx_gain_x_ut.size)
 
         for i in range(self.nit):
 
@@ -122,27 +125,24 @@ class mmw(STATS_OBJECT,sdp_solver):
             eD = (X_mdiag.data-1.)/(1.-1./K)
 
             ## AF, X -> eF
-            QQQ = scipy.sparse.triu(X_offdi)*scipy.sparse.triu(Q_asso)
-            QQQ.eliminate_zeros()
-            QQQ.sort_indices()
-
-            eF = (np.asarray(X_offdi[nz_idx_asso_x,nz_idx_asso_y]).ravel()+1./(Z-1))/(1./(K*(Z-1))+1./2.)
-
+            XXX = np.asarray(X_offdi[nz_idx_asso_x,nz_idx_asso_y]).ravel()
+            eF = (XXX+1./(Z-1))/(1./(K*(Z-1))+1./2.)
             ## AH, X -> eH
             AHX = S_gain_T_no_diag*X_offdi
-            eH = (np.asarray(AHX.sum(axis=1)).ravel()*(Z-1)/Z - (h_max-1/Z * S_sum))/norm_H
+            eH = ((np.asarray(AHX.sum(axis=1)).ravel()*(Z-1)/Z) - (h_max-(1/Z * S_sum)))/norm_H
+
 
             ## eD, eF, eH, e_accu -> YD, YF, YH, e_accu
             e_accu[0:K] += eD*self.eta
             e_accu[K:K+E_asso] += eF*self.eta
-            e_accu[K+E_asso:2*K+K+E_asso] += eH*self.eta
+            e_accu[K+E_asso:2*K+E_asso] += eH*self.eta
 
             e_weighted += np.sum(eD*YD) + np.sum(eF*YF) + np.sum(eH*YH)
 
             Y = scipy.special.softmax(e_accu)
             YD = Y[0:K]
             YF = Y[K:K+E_asso]
-            YH = Y[K+E_asso:2*K+K+E_asso]
+            YH = Y[K+E_asso:2*K+E_asso]
 
             tim = self._get_tim(tic_dual)
             self._add_np_log("mmw_dual",i,np.array([Z,K,tim]))
@@ -167,3 +167,7 @@ if __name__ == '__main__':
     data = np.array([1, 2, 3, 4, 5, 6])
     a = scipy.sparse.csr_matrix((data, (row, col)), shape=(3, 3)).toarray()
     print(a[row,col])
+
+    e = scipy.sparse.csr_matrix((10,10))
+    v = np.random.randn(10)
+    print(scipy.sparse.linalg.expm_multiply(e,v),v)
