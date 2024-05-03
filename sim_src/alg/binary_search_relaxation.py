@@ -8,8 +8,12 @@ from sim_src.util import STATS_OBJECT
 class binary_search_relaxation(alg_interface,STATS_OBJECT):
     def __init__(self):
         self.feasibility_check_alg = None
-
+        self.force_lower_bound = False
     def set_bounds(self,state):
+        if self.force_lower_bound:
+            nnz_per_row = np.diff(state[1].indptr)
+            lb = np.max(nnz_per_row)+1
+            return lb,lb
         S_gain = state[0].copy()
         S = S_gain + S_gain.transpose()
         S.setdiag(0)

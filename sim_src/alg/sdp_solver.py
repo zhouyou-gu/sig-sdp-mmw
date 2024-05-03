@@ -30,9 +30,10 @@ class sdp_solver:
             k_list_z = []
             for n in range(nattempt):
                 k_list = []
-                randv = np.random.randn(D,1)
-                randv = np.matmul(gX[not_assigned],randv).ravel()
+                # randv = np.random.randn(D,1)
                 kindx = np.arange(K)[not_assigned]
+                krand = kindx[np.random.choice(kindx.size)]
+                randv = np.matmul(gX[not_assigned],gX[krand]).ravel()
                 krank = kindx[np.argsort(-randv)]
                 for i in range(krank.size):
                     tmp = k_list.copy()

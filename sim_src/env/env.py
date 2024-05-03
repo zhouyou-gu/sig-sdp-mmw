@@ -9,7 +9,7 @@ class env():
     NOISE_FLOOR_DBM = -94.
     BOLTZMANN = 1.3803e-23
     NOISEFIGURE = 13
-    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 5e-2, fre_Hz = 4e9, txp_dbm_hi = 5.,  min_s_n_ratio = 0.5, packet_bit = 400, bandwidth = 2e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
+    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 1e-2, fre_Hz = 4e9, txp_dbm_hi = 5.,  min_s_n_ratio = 0.5, packet_bit = 400, bandwidth = 2e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
         self.rand_gen_loc = np.random.default_rng(seed)
         self.rand_gen_fad = np.random.default_rng(seed)
         self.rand_gen_mob = np.random.default_rng(seed)
