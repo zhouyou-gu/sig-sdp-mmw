@@ -128,6 +128,8 @@ class STATS_OBJECT:
     LOGGED_NP_DATA = {}
 
     LOGGED_CLASS_NAME = None
+
+    PRINT_DIM = 5
     def save(self, path: str, postfix: str):
         pass
 
