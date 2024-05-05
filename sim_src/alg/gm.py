@@ -131,44 +131,46 @@ class MAX_RAND(STATS_OBJECT):
         not_assigned = np.ones(K, dtype=bool)
 
         z_vec = np.zeros(K)
-        ZZ = 0
-        for z in range(Z):
-            ZZ += 1
-            tmp_gain_sum = np.zeros(K)
-            tmp_asso_sum = np.zeros(K)
-            k_list_z = []
-            for n in range(nattempt):
-                k_list = []
-                kindx = np.arange(K)[not_assigned]
-                krank = kindx[np.argsort(-np.random.randn(K)[not_assigned])]
-                for i in range(krank.size):
-                    tmp = k_list.copy()
-                    tmp.append(krank[i])
-                    # do interference check
-                    tmp_h = np.asarray(S_gain_T_no_diag[krank[i]].toarray()).ravel()
-                    vio = (tmp_gain_sum[tmp] + tmp_h[tmp]) > h_max[tmp]
-                    if np.any(vio == True):
-                        continue
+        ZZ_info = []
 
-                    # do association check
-                    tmp_a = np.asarray(Q_asso[krank[i]].toarray()).ravel()
-                    vio = (tmp_asso_sum[tmp] + tmp_a[tmp]) >= 1
 
-                    if np.any(vio == True):
-                        continue
+        rank = np.array(sorted(range(K),key = lambda i: (i)))
 
-                    tmp_gain_sum += tmp_h
-                    tmp_asso_sum += tmp_a
-                    k_list.append(krank[i])
+        for i in range(K):
+            found_Z = False
+            k = rank[i]
+            for z in range(len(ZZ_info)):
+                tmp = ZZ_info[z]["k_list"].copy()
+                tmp.append(k)
+                # do interference check
+                tmp_h = np.asarray(S_gain_T_no_diag[k].toarray()).ravel()
+                vio = (ZZ_info[z]["tmp_gain_sum"][tmp] + tmp_h[tmp]) > h_max[tmp]
+                if np.any(vio == True):
+                    continue
 
-                if len(k_list) > len(k_list_z):
-                    k_list_z = k_list
-            z_vec[k_list_z] = z
-            not_assigned[k_list_z] = False
-            if np.all(not_assigned == False):
+                # do association check
+                tmp_a = np.asarray(Q_asso[k].toarray()).ravel()
+                vio = (ZZ_info[z]["tmp_asso_sum"][tmp] + tmp_a[tmp]) >= 1
+                if np.any(vio == True):
+                    continue
+
+                found_Z = True
+                ZZ_info[z]["k_list"].append(k)
+                not_assigned[k] = False
                 break
+
+            if (not found_Z) and len(ZZ_info)<Z:
+                tmp_gain_sum = np.asarray(S_gain_T_no_diag[k].toarray()).ravel()
+                tmp_asso_sum = np.asarray(Q_asso[k].toarray()).ravel()
+                ZZ_info_element = {}
+                ZZ_info_element["tmp_gain_sum"] = tmp_gain_sum
+                ZZ_info_element["tmp_asso_sum"] = tmp_asso_sum
+                ZZ_info_element["k_list"] = [k]
+                ZZ_info.append(ZZ_info_element)
+                not_assigned[k] = False
+
 
         if not np.all(not_assigned == False):
             z_vec[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))
 
-        return z_vec, ZZ, np.sum(not_assigned)
+        return z_vec, len(ZZ_info), np.sum(not_assigned)

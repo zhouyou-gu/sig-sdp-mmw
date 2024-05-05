@@ -18,11 +18,11 @@ from sim_src.util import GLOBAL_PROF_ENABLER, plot_a_array
 np.set_printoptions(threshold=10)
 np.set_printoptions(linewidth=1000)
 
-e = env(cell_size=10,seed=int(time.time()))
+e = env(cell_size=8,seed=int(time.time()))
 print(e.n_sta)
 bs = binary_search_relaxation()
 bs.force_lower_bound = True
-alg = mmw(nit=500, D=100, alpha=1., eta=0.05)
+alg = mmw(nit=1000, D=100, alpha=1., eta=0.05)
 alg.DEBUG=True
 bs.feasibility_check_alg = alg
 e.generate_S_Q_hmax()
