@@ -40,7 +40,7 @@ class mmw(STATS_OBJECT,sdp_solver):
 
         return S_gain_T_no_asso_no_diag, s_max, Q_asso, h_max, S_sum, norm_H
 
-    @profile
+    # @profile
     def _run(self,Z,state):
         ### state process
         sp_tic = self._get_tic()
@@ -187,13 +187,12 @@ class mmw(STATS_OBJECT,sdp_solver):
 
 
     def rounding(self,Z,gX,state,nattempt=1):
-        K = gX.shape[0]
-        D = gX.shape[1]
-        S_gain = state[0]
+        K = state[0].shape[0]
+        S_gain = state[0].copy()
         Q_asso = state[1]
         h_max = state[2]
+        S_gain.setdiag(0)
         S_gain_T_no_diag = S_gain.transpose()
-        S_gain_T_no_diag.setdiag(0)
         not_assigned = np.ones(K, dtype=bool)
 
         z_vec = np.zeros(K)
@@ -210,25 +209,33 @@ class mmw(STATS_OBJECT,sdp_solver):
         for i in range(K):
             found_Z = False
             k = rank[i]
+            max_inner_product = -math.inf
+            best_Z = None
+            tmp_h = np.asarray(S_gain[k].toarray()).ravel()
+            tmp_a = np.asarray(Q_asso[k].toarray()).ravel()
             for z in range(len(ZZ_info)):
                 tmp = ZZ_info[z]["k_list"].copy()
                 tmp.append(k)
                 # do interference check
-                tmp_h = np.asarray(S_gain_T_no_diag[k].toarray()).ravel()
                 vio = (ZZ_info[z]["tmp_gain_sum"][tmp] + tmp_h[tmp]) > h_max[tmp]
                 if np.any(vio == True):
                     continue
 
                 # do association check
-                tmp_a = np.asarray(Q_asso[k].toarray()).ravel()
                 vio = (ZZ_info[z]["tmp_asso_sum"][tmp] + tmp_a[tmp]) >= 1
                 if np.any(vio == True):
                     continue
-
+                inner_product = np.sum(np.asarray(X_avgd[np.ix_(tmp,tmp)].toarray()).ravel())
                 found_Z = True
-                ZZ_info[z]["k_list"].append(k)
+                if inner_product>max_inner_product:
+                    best_Z = z
+                    max_inner_product = inner_product
+
+            if found_Z:
+                ZZ_info[best_Z]["k_list"].append(k)
                 not_assigned[k] = False
-                break
+                ZZ_info[best_Z]["tmp_gain_sum"] += tmp_h
+                ZZ_info[best_Z]["tmp_asso_sum"] += tmp_a
 
             if (not found_Z) and len(ZZ_info)<Z:
                 tmp_gain_sum = np.asarray(S_gain_T_no_diag[k].toarray()).ravel()

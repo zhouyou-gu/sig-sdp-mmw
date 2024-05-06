@@ -8,11 +8,11 @@ class MAX_GAIN(STATS_OBJECT):
     @staticmethod
     def run(Z,state,nattempt=1):
         K = state[0].shape[0]
-        S_gain = state[0]
+        S_gain = state[0].copy()
         Q_asso = state[1]
         h_max = state[2]
+        S_gain.setdiag(0)
         S_gain_T_no_diag = S_gain.transpose()
-        S_gain_T_no_diag.setdiag(0)
         not_assigned = np.ones(K, dtype=bool)
 
         S_sum = np.asarray(S_gain_T_no_diag.sum(axis=1)).ravel()
@@ -32,7 +32,7 @@ class MAX_GAIN(STATS_OBJECT):
                     tmp = k_list.copy()
                     tmp.append(krank[i])
                     # do interference check
-                    tmp_h = np.asarray(S_gain_T_no_diag[krank[i]].toarray()).ravel()
+                    tmp_h = np.asarray(S_gain[krank[i]].toarray()).ravel()
                     vio = (tmp_gain_sum[tmp] + tmp_h[tmp]) > h_max[tmp]
                     if np.any(vio == True):
                         continue
@@ -66,11 +66,11 @@ class MAX_ASSO(STATS_OBJECT):
     @staticmethod
     def run(Z,state,nattempt=1):
         K = state[0].shape[0]
-        S_gain = state[0]
+        S_gain = state[0].copy()
         Q_asso = state[1]
         h_max = state[2]
+        S_gain.setdiag(0)
         S_gain_T_no_diag = S_gain.transpose()
-        S_gain_T_no_diag.setdiag(0)
         not_assigned = np.ones(K, dtype=bool)
 
         A_sum = np.asarray(Q_asso.sum(axis=1)).ravel()
@@ -90,7 +90,7 @@ class MAX_ASSO(STATS_OBJECT):
                     tmp = k_list.copy()
                     tmp.append(krank[i])
                     # do interference check
-                    tmp_h = np.asarray(S_gain_T_no_diag[krank[i]].toarray()).ravel()
+                    tmp_h = np.asarray(S_gain[krank[i]].toarray()).ravel()
                     vio = (tmp_gain_sum[tmp] + tmp_h[tmp]) > h_max[tmp]
                     if np.any(vio == True):
                         continue
@@ -123,11 +123,11 @@ class MAX_RAND(STATS_OBJECT):
     @staticmethod
     def run(Z,state,nattempt=1):
         K = state[0].shape[0]
-        S_gain = state[0]
+        S_gain = state[0].copy()
         Q_asso = state[1]
         h_max = state[2]
+        S_gain.setdiag(0)
         S_gain_T_no_diag = S_gain.transpose()
-        S_gain_T_no_diag.setdiag(0)
         not_assigned = np.ones(K, dtype=bool)
 
         z_vec = np.zeros(K)
@@ -143,7 +143,7 @@ class MAX_RAND(STATS_OBJECT):
                 tmp = ZZ_info[z]["k_list"].copy()
                 tmp.append(k)
                 # do interference check
-                tmp_h = np.asarray(S_gain_T_no_diag[k].toarray()).ravel()
+                tmp_h = np.asarray(S_gain[k].toarray()).ravel()
                 vio = (ZZ_info[z]["tmp_gain_sum"][tmp] + tmp_h[tmp]) > h_max[tmp]
                 if np.any(vio == True):
                     continue
@@ -157,10 +157,12 @@ class MAX_RAND(STATS_OBJECT):
                 found_Z = True
                 ZZ_info[z]["k_list"].append(k)
                 not_assigned[k] = False
+                ZZ_info[z]["tmp_gain_sum"] += tmp_h
+                ZZ_info[z]["tmp_asso_sum"] += tmp_a
                 break
 
             if (not found_Z) and len(ZZ_info)<Z:
-                tmp_gain_sum = np.asarray(S_gain_T_no_diag[k].toarray()).ravel()
+                tmp_gain_sum = np.asarray(S_gain[k].toarray()).ravel()
                 tmp_asso_sum = np.asarray(Q_asso[k].toarray()).ravel()
                 ZZ_info_element = {}
                 ZZ_info_element["tmp_gain_sum"] = tmp_gain_sum

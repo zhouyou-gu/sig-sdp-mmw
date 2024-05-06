@@ -18,7 +18,7 @@ from sim_src.util import GLOBAL_PROF_ENABLER, plot_a_array
 np.set_printoptions(threshold=10)
 np.set_printoptions(linewidth=1000)
 
-e = env(cell_size=8,seed=int(time.time()))
+e = env(cell_size=5,seed=int(time.time()),sta_density_per_1m2=3e-2)
 print(e.n_sta)
 bs = binary_search_relaxation()
 bs.force_lower_bound = True
