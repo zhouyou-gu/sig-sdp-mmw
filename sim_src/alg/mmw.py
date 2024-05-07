@@ -172,11 +172,11 @@ class mmw(STATS_OBJECT,sdp_solver):
         self.solution["nz_idx_asso_y_ut"] = nz_idx_asso_y_ut
         self.solution["X_avgd"] = X_avgd
 
-        s, v = scipy.sparse.linalg.eigsh(X_avgd,k=Z,which='LM')
-        # v = v/np.linalg.norm(v,axis=1,keepdims=True)
-        print(np.matmul(v,v.transpose()))
-
-        return True, v
+        L_half = L_accu.copy()
+        L_half.data = L_half.data/2.
+        X_half = mmw.expm_half_randsk(L_half.copy(),self.D*1000)
+        X_half = X_half/np.linalg.norm(X_half, axis=1, keepdims=True)
+        return True, X_half
 
     @staticmethod
     def expm_half_randsk(L,D):
@@ -185,7 +185,7 @@ class mmw(STATS_OBJECT,sdp_solver):
         ret = scipy.sparse.linalg.expm_multiply(L.copy(),randv)
         return ret
 
-
+class mmw_gc(mmw):
     def rounding(self,Z,gX,state,nattempt=1):
         K = state[0].shape[0]
         S_gain = state[0].copy()
@@ -253,6 +253,126 @@ class mmw(STATS_OBJECT,sdp_solver):
 
         return z_vec, len(ZZ_info), np.sum(not_assigned)
 
+class mmw_vec_rounding(mmw):
+    def rounding(self,Z,gX,state,nattempt=1):
+        K = state[0].shape[0]
+        D = gX.shape[1]
+        S_gain = state[0].copy()
+        Q_asso = state[1]
+        h_max = state[2]
+        S_gain.setdiag(0)
+        S_gain_T_no_diag = S_gain.transpose()
+        not_assigned = np.ones(K, dtype=bool)
+
+
+        z_vec = np.zeros(K)
+        ZZ = 0
+        for z in range(Z):
+            ZZ += 1
+            tmp_gain_sum = np.zeros(K)
+            tmp_asso_sum = np.zeros(K)
+            k_list_z = []
+            for n in range(nattempt):
+                k_list = []
+                randv = np.random.randn(D,1)
+                randv = np.matmul(gX[not_assigned],randv).ravel()
+                kindx = np.arange(K)[not_assigned]
+                krank = kindx[np.argsort(-randv)]
+                for i in range(krank.size):
+                    tmp = k_list.copy()
+                    tmp.append(krank[i])
+                    # do interference check
+                    tmp_h = np.asarray(S_gain[krank[i]].toarray()).ravel()
+                    vio = (tmp_gain_sum[tmp] + tmp_h[tmp]) > h_max[tmp]
+                    if np.any(vio == True):
+                        continue
+
+                    # do association check
+                    tmp_a = np.asarray(Q_asso[krank[i]].toarray()).ravel()
+                    vio = (tmp_asso_sum[tmp] + tmp_a[tmp]) >= 1
+
+                    if np.any(vio == True):
+                        continue
+
+                    tmp_gain_sum += tmp_h
+                    tmp_asso_sum += tmp_a
+                    k_list.append(krank[i])
+
+                if len(k_list) > len(k_list_z):
+                    k_list_z = k_list
+            z_vec[k_list_z] = z
+            not_assigned[k_list_z] = False
+            if np.all(not_assigned == False):
+                break
+
+        if not np.all(not_assigned == False):
+            z_vec[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))
+
+        return z_vec, ZZ, np.sum(not_assigned)
+
+
+class mmw_vec_rounding_slot_based(mmw):
+    def rounding(self,Z,gX,state,nattempt=1):
+        K = state[0].shape[0]
+        D = gX.shape[1]
+        S_gain = state[0].copy()
+        Q_asso = state[1]
+        h_max = state[2]
+        S_gain.setdiag(0)
+        S_gain_T_no_diag = S_gain.transpose()
+        not_assigned = np.ones(K, dtype=bool)
+
+        z_vec = np.zeros(K)
+        ZZ_info = []
+
+        X_avgd = self.solution["X_avgd"].copy()
+        X_avgd.setdiag(0)
+        X_avgd[self.solution["nz_idx_asso_x_ut"],self.solution["nz_idx_asso_y_ut"]] = 0
+        X_sum = np.asarray(X_avgd.sum(1)).ravel()
+        A_sum = np.asarray(Q_asso.sum(axis=1)).ravel()
+
+
+        for z in range(Z):
+            # randv = np.random.randn(D,1)
+            # randv = np.matmul(gX,randv).ravel()
+            kindx = np.random.choice(np.arange(K)[not_assigned])
+            randv = np.matmul(gX,gX[kindx]).ravel()
+            krank = np.argsort(-randv)
+
+            ZZ_info_element = {}
+            ZZ_info_element["tmp_gain_sum"] = np.zeros(K)
+            ZZ_info_element["tmp_asso_sum"] = np.zeros(K)
+            ZZ_info_element["k_list"] = []
+            ZZ_info_element["k_rank"] = krank
+            ZZ_info.append(ZZ_info_element)
+
+            for i in range(K):
+                k = ZZ_info[z]["k_rank"][i]
+                if not not_assigned[k]:
+                    continue
+                tmp = ZZ_info[z]["k_list"].copy()
+                tmp.append(k)
+                # do interference check
+                tmp_h = np.asarray(S_gain[k].toarray()).ravel()
+                vio = (ZZ_info[z]["tmp_gain_sum"][tmp] + tmp_h[tmp]) > h_max[tmp]
+                if np.any(vio == True):
+                    continue
+
+                # do association check
+                tmp_a = np.asarray(Q_asso[k].toarray()).ravel()
+                vio = (ZZ_info[z]["tmp_asso_sum"][tmp] + tmp_a[tmp]) >= 1
+                if np.any(vio == True):
+                    continue
+
+                not_assigned[k] = False
+                ZZ_info[z]["k_list"].append(k)
+                ZZ_info[z]["tmp_gain_sum"] += tmp_h
+                ZZ_info[z]["tmp_asso_sum"] += tmp_a
+
+        if not np.all(not_assigned == False):
+            z_vec[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))
+
+        return z_vec, len(ZZ_info), np.sum(not_assigned)
 if __name__ == '__main__':
     row = np.array([0, 0, 1, 2, 2, 2])
     col = np.array([0, 2, 2, 0, 1, 2])
