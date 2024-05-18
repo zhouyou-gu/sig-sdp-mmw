@@ -9,7 +9,7 @@ class env():
     NOISE_FLOOR_DBM = -94.
     BOLTZMANN = 1.3803e-23
     NOISEFIGURE = 13
-    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 1e-2, fre_Hz = 4e9, txp_dbm_hi = 5.,  min_s_n_ratio = 0.5, packet_bit = 400, bandwidth = 2e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
+    def __init__(self, cell_edge = 10., cell_size = 20, sta_density_per_1m2 = 2e-2, fre_Hz = 4e9, txp_dbm_hi = 5., txp_offset = 1.01, min_s_n_ratio = 0.5, packet_bit = 400, bandwidth = 2e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
         self.rand_gen_loc = np.random.default_rng(seed)
         self.rand_gen_fad = np.random.default_rng(seed)
         self.rand_gen_mob = np.random.default_rng(seed)
@@ -29,6 +29,7 @@ class env():
         self.fre_Hz = fre_Hz
         self.lam = self.C / self.fre_Hz
         self.txp_dbm_hi = txp_dbm_hi
+        self.txp_offset = txp_offset
         self.min_s_n_ratio = min_s_n_ratio
         self.packet_bit = packet_bit
         self.bandwidth = bandwidth
@@ -100,6 +101,10 @@ class env():
         return 10.**(snr_db/10.)
 
     @staticmethod
+    def dec_to_db(snr_dec):
+        return 10.* math.log10(snr_dec)
+
+    @staticmethod
     def polyanskiy_model(snr_dec, L, B, T):
         nu = - L * math.log(2.) + B * T * math.log(1+snr_dec)
         do = math.sqrt(B * T * (1. - 1./((1.+snr_dec)**2)))
@@ -128,12 +133,18 @@ class env():
 
         return (a + b) / 2
 
+    def _compute_txp(self):
+        dis = scipy.spatial.distance.cdist(self.sta_locs,self.ap_locs)
+        gain = -env.fre_dis_to_loss_dB(self.fre_Hz,dis)
+        smax = np.max(gain, axis=1)
+        t = env.dec_to_db(self._compute_min_sinr()) - (smax - self.bandwidth_txpr_to_noise_dBm(self.bandwidth))
+        return np.reshape(t + env.dec_to_db(self.txp_offset),(self.n_sta,-1))
 
     def _compute_state(self):
         dis = scipy.spatial.distance.cdist(self.sta_locs,self.ap_locs)
         self.loss = env.fre_dis_to_loss_dB(self.fre_Hz,dis)
 
-        rxpr_db = self.txp_dbm_hi - self.loss - self.bandwidth_txpr_to_noise_dBm(self.bandwidth)
+        rxpr_db = self._compute_txp() - self.loss - self.bandwidth_txpr_to_noise_dBm(self.bandwidth)
         rxpr_hi = 10 ** (rxpr_db / 10.)
 
         rxpr_hi[rxpr_hi < self.min_s_n_ratio] = 0.
@@ -146,7 +157,7 @@ class env():
         dis = scipy.spatial.distance.cdist(self.sta_locs,self.ap_locs)
         self.loss = env.fre_dis_to_loss_dB(self.fre_Hz,dis)
 
-        rxpr_db = self.txp_dbm_hi - self.loss - self.bandwidth_txpr_to_noise_dBm(self.bandwidth)
+        rxpr_db = self._compute_txp() - self.loss - self.bandwidth_txpr_to_noise_dBm(self.bandwidth)
         rxpr_hi = 10 ** (rxpr_db / 10.)
 
         rxpr_hi = scipy.sparse.csr_matrix(rxpr_hi)
