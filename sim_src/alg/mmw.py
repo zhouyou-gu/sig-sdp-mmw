@@ -246,6 +246,8 @@ class mmw_gc(mmw):
                 ZZ_info_element["k_list"] = [k]
                 ZZ_info.append(ZZ_info_element)
                 not_assigned[k] = False
+        for z in range(len(ZZ_info)):
+            print(ZZ_info[z]["k_list"])
 
 
         if not np.all(not_assigned == False):
@@ -332,7 +334,7 @@ class mmw_vec_rounding_slot_based(mmw):
         A_sum = np.asarray(Q_asso.sum(axis=1)).ravel()
 
 
-        for z in range(Z):
+        for z in range(Z*5):
             # randv = np.random.randn(D,1)
             # randv = np.matmul(gX,randv).ravel()
             kindx = np.random.choice(np.arange(K)[not_assigned])
@@ -368,6 +370,9 @@ class mmw_vec_rounding_slot_based(mmw):
                 ZZ_info[z]["k_list"].append(k)
                 ZZ_info[z]["tmp_gain_sum"] += tmp_h
                 ZZ_info[z]["tmp_asso_sum"] += tmp_a
+
+            if np.all(not_assigned == False):
+                break
 
         if not np.all(not_assigned == False):
             z_vec[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))
