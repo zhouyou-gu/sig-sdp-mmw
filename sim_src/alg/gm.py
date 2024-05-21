@@ -127,52 +127,63 @@ class MAX_RAND(STATS_OBJECT):
         Q_asso = state[1]
         h_max = state[2]
         S_gain.setdiag(0)
+        S_gain.eliminate_zeros()
         S_gain_T_no_diag = S_gain.transpose()
+
+        S_gain_index = np.split(S_gain.indices, S_gain.indptr)[1:-1]
+        Q_asso_index = np.split(Q_asso.indices, S_gain.indptr)[1:-1]
+
         not_assigned = np.ones(K, dtype=bool)
 
+        indices = np.repeat(np.arange(Z).reshape((Z,1)),repeats=K,axis=1)
+        rng = np.random.default_rng()
+        sorted_indices = rng.permuted(indices, axis=0)
+
         z_vec = np.zeros(K)
-        ZZ_info = []
 
+        gain_sum = []
+        asso_sum = []
+        slot_asn = []
+        for z in range(Z):
+            gain_sum.append(np.zeros(K))
+            asso_sum.append(np.zeros(K))
+            slot_asn.append([])
 
-        rank = np.array(sorted(range(K),key = lambda i: (i)))
+        user_sum = 0
+        for k in range(K):
+            for zz in range(Z):
+                z = sorted_indices[zz,k]
 
-        for i in range(K):
-            found_Z = False
-            k = rank[i]
-            for z in range(len(ZZ_info)):
-                tmp = ZZ_info[z]["k_list"].copy()
-                tmp.append(k)
+                if not not_assigned[k]:
+                    break
+
                 # do interference check
+                neighbor_index = np.intersect1d(np.array(slot_asn[z]),S_gain_index[k])
+                neighbor_index = np.append(neighbor_index,k).astype(int)
                 tmp_h = np.asarray(S_gain[k].toarray()).ravel()
-                vio = (ZZ_info[z]["tmp_gain_sum"][tmp] + tmp_h[tmp]) > h_max[tmp]
+                vio = (gain_sum[z][neighbor_index] + tmp_h[neighbor_index]) > h_max[neighbor_index]
                 if np.any(vio == True):
                     continue
 
                 # do association check
+                neighbor_index = np.intersect1d(np.array(slot_asn[z]),Q_asso_index[k])
+                neighbor_index = np.append(neighbor_index,k).astype(int)
                 tmp_a = np.asarray(Q_asso[k].toarray()).ravel()
-                vio = (ZZ_info[z]["tmp_asso_sum"][tmp] + tmp_a[tmp]) >= 1
+                vio = (asso_sum[z][neighbor_index] + tmp_a[neighbor_index]) >= 1
                 if np.any(vio == True):
                     continue
 
-                found_Z = True
-                ZZ_info[z]["k_list"].append(k)
-                not_assigned[k] = False
-                ZZ_info[z]["tmp_gain_sum"] += tmp_h
-                ZZ_info[z]["tmp_asso_sum"] += tmp_a
-                break
+                gain_sum[z] += np.asarray(S_gain[k].toarray()).ravel()
+                asso_sum[z] += np.asarray(Q_asso[k].toarray()).ravel()
+                slot_asn[z].append(k)
 
-            if (not found_Z) and len(ZZ_info)<Z:
-                tmp_gain_sum = np.asarray(S_gain[k].toarray()).ravel()
-                tmp_asso_sum = np.asarray(Q_asso[k].toarray()).ravel()
-                ZZ_info_element = {}
-                ZZ_info_element["tmp_gain_sum"] = tmp_gain_sum
-                ZZ_info_element["tmp_asso_sum"] = tmp_asso_sum
-                ZZ_info_element["k_list"] = [k]
-                ZZ_info.append(ZZ_info_element)
+                user_sum += 1
                 not_assigned[k] = False
+                z_vec[k] = z
+                break
 
 
         if not np.all(not_assigned == False):
             z_vec[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))
-
-        return z_vec, len(ZZ_info), np.sum(not_assigned)
+            print(z_vec[not_assigned])
+        return z_vec, Z, np.sum(not_assigned)

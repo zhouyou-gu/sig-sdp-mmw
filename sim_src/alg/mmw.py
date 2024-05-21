@@ -10,8 +10,8 @@ from sim_src.util import STATS_OBJECT, profile
 
 
 class mmw(STATS_OBJECT,sdp_solver):
-    RANK_RATIO = 5
-    def __init__(self, nit=100, D=5, alpha=1., eta=0.1):
+    RANK_RATIO = 2
+    def __init__(self, nit=100, D=5, alpha=1.5, eta=0.1):
         self.nit = nit
         self.D = D
         self.alpha = alpha
@@ -40,7 +40,7 @@ class mmw(STATS_OBJECT,sdp_solver):
         S_gain_T_no_asso_no_diag_square.data = S_gain_T_no_asso_no_diag_square.data ** 2
         norm_H = np.sqrt(np.asarray(S_gain_T_no_asso_no_diag_square.sum(axis=1)).ravel()) * (Z-1)/(2*Z) + np.abs(1/K*h_max-1/K/Z*S_sum)
 
-        return S_gain_T_no_asso_no_diag, s_max, Q_asso, h_max, S_sum, norm_H
+        return S_gain_T_no_asso_no_diag, s_max, Q_asso, h_max/self.alpha, S_sum, norm_H
 
     # @profile
     def _run(self,Z,state):
@@ -72,6 +72,7 @@ class mmw(STATS_OBJECT,sdp_solver):
         self._add_np_log("mmw_state_process",0,np.array([Z,K,tim]))
 
         X_avgd = scipy.sparse.csr_matrix((K,K))
+        self.N_STEP = 0
         for i in range(self.nit):
             X_avgd += (X_offdi + X_mdiag)
             self.N_STEP += 1
@@ -166,25 +167,15 @@ class mmw(STATS_OBJECT,sdp_solver):
         self._print("XAVG_nz_Q_idx###########\n",np.vstack((nz_idx_asso_x_ut[0:self.PRINT_DIM],nz_idx_asso_y_ut[0:self.PRINT_DIM])),1/(Z-1))
         self._print("XAVG_nz_Q###############\n",X_avgd[nz_idx_asso_x_ut[0:self.PRINT_DIM],nz_idx_asso_y_ut[0:self.PRINT_DIM]],1/(Z-1))
         self._print("XAVG_nz_Sort############\n",np.sort(np.asarray(X_avgd[nz_idx_gain_x_ut,nz_idx_gain_y_ut]).flatten())[:10])
-        self._print("XAVG_lam_min############\n",s)
+        self._print("XAVG_lam_min############\n",-s)
 
         rank = np.min([K-1 , (Z-1)*self.RANK_RATIO])
+        # X_avgd[nz_idx_asso_x_ut,nz_idx_asso_y_ut] = 0.
         u, s, vT = scipy.sparse.linalg.svds(X_avgd, k=rank)
         X_half = np.matmul(u, np.diag(np.sqrt(s)))
-        X_half = X_half/np.linalg.norm(X_half, axis=1, keepdims=True)
+        # X_half = X_half/np.linalg.norm(X_half, axis=1, keepdims=True)
         XX = np.matmul(X_half[0:self.PRINT_DIM],X_half[0:self.PRINT_DIM].transpose())
         self._print("X_half_ret############\n",XX[0:self.PRINT_DIM,0:self.PRINT_DIM])
-        # print("+++++")
-        # self.solution["nz_idx_gain_x_ut"] = nz_idx_gain_x_ut
-        # self.solution["nz_idx_gain_y_ut"] = nz_idx_gain_y_ut
-        # self.solution["nz_idx_asso_x_ut"] = nz_idx_asso_x_ut
-        # self.solution["nz_idx_asso_y_ut"] = nz_idx_asso_y_ut
-        # self.solution["X_avgd"] = X_avgd
-
-        # L_half = L_accu.copy()
-        # L_half.data = L_half.data/2.
-        # X_half = mmw.expm_half_randsk(L_half.copy(),self.D*1000)
-        # X_half = X_half/np.linalg.norm(X_half, axis=1, keepdims=True)
         return True, X_half
 
     @staticmethod
@@ -205,15 +196,25 @@ class mmw_vec_rd(mmw):
         S_gain.eliminate_zeros()
         S_gain_T_no_diag = S_gain.transpose()
 
+        # A_sum = np.asarray(Q_asso.sum(axis=1)).ravel()
+        # rank = np.argsort(-A_sum)
+
         S_gain_index = np.split(S_gain.indices, S_gain.indptr)[1:-1]
         Q_asso_index = np.split(Q_asso.indices, S_gain.indptr)[1:-1]
 
         not_assigned = np.ones(K, dtype=bool)
 
-        simplex = generate_rand_regular_simplex_with_Z_vertices(Z,D)
+        # random_indices = np.random.choice(K, Z, replace=False)
+        # randv = gX[random_indices]
 
-        inprod = np.matmul(simplex,gX.transpose())
-        sorted_indices = np.argsort(-inprod, axis=1)
+        randv = np.random.randn(Z,D)
+        randv = randv/np.linalg.norm(randv, axis=1, keepdims=True)
+
+        rank = np.argsort(-np.linalg.norm(gX, axis=1))
+        # randv = generate_rand_regular_simplex_with_Z_vertices(Z,D)
+
+        inprod = np.matmul(randv,gX.transpose())
+        sorted_indices = np.argsort(-inprod, axis=0)
 
         z_vec = np.zeros(K)
 
@@ -226,12 +227,13 @@ class mmw_vec_rd(mmw):
             slot_asn.append([])
 
         user_sum = 0
-        for z in range(Z):
-            for kk in range(K):
-                k = sorted_indices[z,kk]
+        for kk in range(K):
+            k = rank[kk]
+            for zz in range(Z):
+                z = sorted_indices[zz,k]
 
                 if not not_assigned[k]:
-                    continue
+                    break
 
                 # do interference check
                 neighbor_index = np.intersect1d(np.array(slot_asn[z]),S_gain_index[k])
@@ -256,11 +258,8 @@ class mmw_vec_rd(mmw):
                 user_sum += 1
                 not_assigned[k] = False
                 z_vec[k] = z
-
-                if user_sum >= K:
-                    break
-            if user_sum >= K:
                 break
+
 
         if not np.all(not_assigned == False):
             z_vec[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))

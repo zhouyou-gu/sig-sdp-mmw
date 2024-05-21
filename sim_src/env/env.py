@@ -9,7 +9,7 @@ class env():
     NOISE_FLOOR_DBM = -94.
     BOLTZMANN = 1.3803e-23
     NOISEFIGURE = 13
-    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 5e-3, fre_Hz = 4e9, txp_dbm_hi = 5., txp_offset = 1.1, min_s_n_ratio = 0.1, packet_bit = 400, bandwidth = 5e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
+    def __init__(self, cell_edge = 20., cell_size = 20, sta_density_per_1m2 = 5e-3, fre_Hz = 4e9, txp_dbm_hi = 5., txp_offset = 1.5, min_s_n_ratio = 0.1, packet_bit = 400, bandwidth = 4e6, slot_time=1.25e-4, max_err = 1e-5, seed=1):
         self.rand_gen_loc = np.random.default_rng(seed)
         self.rand_gen_fad = np.random.default_rng(seed)
         self.rand_gen_mob = np.random.default_rng(seed)
@@ -165,8 +165,12 @@ class env():
 
         return rxpr_hi
 
-    def generate_S_Q_hmax(self)-> (scipy.sparse.csr_matrix, scipy.sparse.csr_matrix):
-        rxpr = self._compute_state()
+    def generate_S_Q_hmax(self,real=False)-> (scipy.sparse.csr_matrix, scipy.sparse.csr_matrix):
+        if real:
+            rxpr = self._compute_state_real()
+        else:
+            rxpr = self._compute_state()
+
         K = rxpr.shape[0]
         A = rxpr.shape[1]
         ss = rxpr.tolil().toarray()
@@ -193,10 +197,10 @@ class env():
 
     def evaluate_sinr(self,z,Z):
         rxpr = self._compute_state_real()
-        S_gain, _, _ = self.generate_S_Q_hmax(rxpr)
+        S_gain, Q_asso, _ = self.generate_S_Q_hmax(real=True)
         S_gain = np.array(S_gain.tolil().toarray())
-        S_gain_no_diag = S_gain.copy().transpose()
-        np.fill_diagonal(S_gain_no_diag, 0)
+        S_gain_T_no_diag = S_gain.copy().transpose()
+        np.fill_diagonal(S_gain_T_no_diag, 0)
 
         K = rxpr.shape[0]
         sinr = np.zeros(K)+1e-3
@@ -204,20 +208,20 @@ class env():
             kidx = z==zz
             kidx = np.arange(K)[kidx]
             signal = S_gain.diagonal()[kidx]
-            interference = S_gain_no_diag.sum(axis=1)
+            interference = np.asarray(S_gain_T_no_diag[kidx][:,kidx].sum(axis=1)).ravel()
             sinr[kidx] = signal/(interference+1)
-
-        ss = rxpr.tolil().toarray()
-        asso = np.argmax(ss, axis=1)
-
-        A = np.max(asso)
-        for a in range(A):
-            for zz in range(Z):
-                kidx = (asso == a) and (z==zz)
-                max_sinr = np.max(sinr[kidx])
-                max_sinr_idx = np.argmax(sinr[kidx])
-                sinr[kidx] = 0
-                sinr[max_sinr_idx] = max_sinr
+        print(sinr)
+        # ss = rxpr.tolil().toarray()
+        # asso = np.argmax(ss, axis=1)
+        #
+        # A = ss.shape[1]
+        # for a in range(A):
+        #     for zz in range(Z):
+        #         kidx = np.logical_and(asso == a , z==zz)
+        #         max_sinr = np.max(np.asarray(sinr[kidx]))
+        #         max_sinr_idx = np.argmax(np.asarray(sinr[kidx]))
+        #         sinr[kidx] = 0
+        #         np.asarray(sinr[kidx])[max_sinr_idx] = max_sinr
         return sinr
 
     def evaluate_bler(self,z,Z):
@@ -225,7 +229,7 @@ class env():
         K = sinr.size
         bler = np.zeros(K)
         for k in range(K):
-            bler[k] = env.polyanskiy_model(sinr,self.packet_bit,self.bandwidth,self.slot_time)
+            bler[k] = env.polyanskiy_model(sinr[k],self.packet_bit,self.bandwidth,self.slot_time)
         return bler
     def evaluate_pckl(self,z,Z):
         bler = self.evaluate_bler(z,Z)
