@@ -135,9 +135,9 @@ class MAX_RAND(STATS_OBJECT):
 
         not_assigned = np.ones(K, dtype=bool)
 
-        indices = np.repeat(np.arange(Z).reshape((Z,1)),repeats=K,axis=1)
-        rng = np.random.default_rng()
-        sorted_indices = rng.permuted(indices, axis=0)
+        inprod = np.random.randn(Z,K)
+        sorted_indices = np.argsort(-inprod, axis=0)
+        rank = np.argsort(np.random.randn(K))
 
         z_vec = np.zeros(K)
 
@@ -150,7 +150,8 @@ class MAX_RAND(STATS_OBJECT):
             slot_asn.append([])
 
         user_sum = 0
-        for k in range(K):
+        for kk in range(K):
+            k = rank[kk]
             for zz in range(Z):
                 z = sorted_indices[zz,k]
 
