@@ -96,7 +96,7 @@ class sdp_solver:
 
         return z_vec, Z, np.sum(not_assigned)
 
-class pdip_sdp_solver(sdp_solver, STATS_OBJECT):
+class admm_sdp_solver(sdp_solver, STATS_OBJECT):
     def __init__(self, nit=100, rank_radio=2, alpha=1.):
         sdp_solver.__init__(self, nit=nit, rank_radio=rank_radio, alpha=alpha)
 
@@ -105,15 +105,15 @@ class pdip_sdp_solver(sdp_solver, STATS_OBJECT):
         prob, X = self._setup_problem(Z,state[0],state[1],state[2])
         tim = self._get_tim(ps_tic)
         K = state[0].shape[0]
-        self._add_np_log("pdip_problem_setup",bs_iteration,np.array([Z,K,tim]))
+        self._add_np_log("admm_problem_setup",bs_iteration,np.array([Z,K,tim]))
 
         solving_tic = self._get_tic()
-        prob.solve(solver=cp.SDPA, maxIteration=self.nit)
+        prob.solve(solver=cp.SCS, max_iters=self.nit)
         u, s, v = np.linalg.svd(X.value)
         rank = np.min([K , (Z-1)*self.rank_radio])
         X_half = u[:,0:rank] * np.sqrt(s[0:rank])
         tim = self._get_tim(solving_tic)
-        self._add_np_log("pdip_solve",bs_iteration,np.array([Z,K,tim]))
+        self._add_np_log("admm_solve",bs_iteration,np.array([Z,K,tim]))
         return True, X_half
 
     def _setup_problem(self, Z, S_gain, Q_asso, h_max):
@@ -143,22 +143,3 @@ class pdip_sdp_solver(sdp_solver, STATS_OBJECT):
         prob = cp.Problem(cp.Minimize(0), constraints)
 
         return prob, X
-
-    def _get_solver(self):
-        return cp.SDPA
-class admm_sdp_solver(pdip_sdp_solver):
-    def run_with_state(self, bs_iteration, Z, state):
-        ps_tic = self._get_tic()
-        prob, X = self._setup_problem(Z,state[0],state[1],state[2])
-        tim = self._get_tim(ps_tic)
-        K = state[0].shape[0]
-        self._add_np_log("admm_problem_setup",bs_iteration,np.array([Z,K,tim]))
-
-        solving_tic = self._get_tic()
-        prob.solve(solver=cp.SCS, max_iters=self.nit)
-        u, s, v = np.linalg.svd(X.value)
-        rank = np.min([K , (Z-1)*self.rank_radio])
-        X_half = u[:,0:rank] * np.sqrt(s[0:rank])
-        tim = self._get_tim(solving_tic)
-        self._add_np_log("admm_solve",bs_iteration,np.array([Z,K,tim]))
-        return True, X_half
