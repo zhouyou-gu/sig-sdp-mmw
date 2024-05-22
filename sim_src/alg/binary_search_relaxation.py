@@ -61,5 +61,5 @@ class binary_search_relaxation(alg_interface,STATS_OBJECT):
                 left+=1
                 right+=1
 
-            print(left,right,Z,rem,"++++++++++++++++++++")
+            self._printalltime(left,right,Z,rem,"++++++++++++++++++++")
         return Z, z_vec, rem, it

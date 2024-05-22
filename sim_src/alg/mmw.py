@@ -10,13 +10,10 @@ from sim_src.util import STATS_OBJECT, profile
 
 
 class mmw(STATS_OBJECT,sdp_solver):
-    RANK_RATIO = 2
-    def __init__(self, nit=100, D=5, alpha=1.5, eta=0.1):
-        self.nit = nit
-        self.D = D
-        self.alpha = alpha
+    def __init__(self, nit=100, rank_radio=2, alpha=1., eta=0.1):
+        sdp_solver.__init__(self, nit=nit, rank_radio=rank_radio, alpha=alpha)
         self.eta = eta
-        self.solution = {}
+
     def run_with_state(self, iteration, Z, state):
         tic = self._get_tic()
         ret = self._run(Z, state)
@@ -40,7 +37,7 @@ class mmw(STATS_OBJECT,sdp_solver):
         S_gain_T_no_asso_no_diag_square.data = S_gain_T_no_asso_no_diag_square.data ** 2
         norm_H = np.sqrt(np.asarray(S_gain_T_no_asso_no_diag_square.sum(axis=1)).ravel()) * (Z-1)/(2*Z) + np.abs(1/K*h_max-1/K/Z*S_sum)
 
-        return S_gain_T_no_asso_no_diag, s_max, Q_asso, h_max/self.alpha, S_sum, norm_H
+        return S_gain_T_no_asso_no_diag, s_max, Q_asso, h_max, S_sum, norm_H
 
     # @profile
     def _run(self,Z,state):
@@ -137,7 +134,7 @@ class mmw(STATS_OBJECT,sdp_solver):
 
                 L_half = L_accu.copy()
                 L_half.data = L_half.data/2.
-                X_half = mmw.expm_half_randsk(L_half.copy(),self.D)
+                X_half = mmw.expm_half_randsk(L_half.copy(),Z*self.rank_radio)
                 # X_half = X_half/np.linalg.norm(X_half, axis=1, keepdims=True)
                 X_mdiag_data = np.sum(X_half * X_half, axis=1)
                 X_trace = np.sum(X_mdiag_data)/K
@@ -169,7 +166,7 @@ class mmw(STATS_OBJECT,sdp_solver):
         self._print("XAVG_nz_Sort############\n",np.sort(np.asarray(X_avgd[nz_idx_gain_x_ut,nz_idx_gain_y_ut]).flatten())[:10])
         self._print("XAVG_lam_min############\n",-s)
 
-        rank = np.min([K-1 , (Z-1)*self.RANK_RATIO])
+        rank = np.min([K-1 , (Z-1)*self.rank_radio])
         # X_avgd[nz_idx_asso_x_ut,nz_idx_asso_y_ut] = 0.
         u, s, vT = scipy.sparse.linalg.svds(X_avgd, k=rank)
         X_half = np.matmul(u, np.diag(np.sqrt(s)))

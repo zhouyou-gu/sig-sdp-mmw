@@ -91,7 +91,7 @@ if __name__ == '__main__':
     ]
     prob = cp.Problem(cp.Minimize(cp.trace(C @ X)),
                       constraints)
-    prob.solve(verbose=True,solver = cp.CLARABEL)
+    prob.solve(verbose=True,solver = cp.SDPA)
 
 
     print(cp.installed_solvers())
