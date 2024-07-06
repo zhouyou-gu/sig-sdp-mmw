@@ -221,6 +221,10 @@ class STATS_OBJECT:
 class CSV_WRITER_OBJECT:
     def __init__(self, path=None):
         self.path = path
+        try:
+            os.mkdir(self.path)
+        except:
+            pass
         self.files = {}
         self.writers = {}
 
@@ -243,8 +247,8 @@ class CSV_WRITER_OBJECT:
             self.files[data_name] = open(os.path.join(self.path,data_name), 'w', newline='')
             self.writers[data_name] = csv.writer(self.files[data_name])
 
-        self.files[data_name].writerow([g_iteration, iteration].append([v for v in values]))
-        self.writers[data_name].flush()
+        self.writers[data_name].writerow([g_iteration, iteration]+ [v for v in values])
+        self.files[data_name].flush()
     def close(self):
         for file in self.files.values():
             file.close()

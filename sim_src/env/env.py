@@ -47,7 +47,7 @@ class env():
         self._config_sta_locs()
         self._config_sta_dirs()
 
-        print(self._compute_min_sinr())
+        # print(self._compute_min_sinr())
 
     def _config_ap_locs(self):
         x=np.linspace(0 + self.ap_offset, self.grid_edge - self.ap_offset, self.cell_size)
