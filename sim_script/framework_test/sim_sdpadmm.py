@@ -36,5 +36,5 @@ for seed in range(REPEAT):
     bler = e.evaluate_bler(z_vec, Z_fin)
     mbler = np.mean(bler)
     wbler = np.max(bler)
-    log.log_mul_scalar(data_name="admm-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler,bler])
+    log.log_mul_scalar(data_name="admm-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler]+bler.tolist())
 

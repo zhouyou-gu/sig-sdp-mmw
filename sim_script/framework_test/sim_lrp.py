@@ -27,9 +27,14 @@ from sim_script.framework_test.config import *
 
 for seed in range(REPEAT):
     e = env(cell_size=CELL_SIZE,sta_density_per_1m2=RHO,seed=seed)
-    z_vec, Z_fin, remainder  = MAX_ASSO.run(e.n_sta,state=(e.generate_S_Q_hmax()))
+    bs = binary_search_relaxation()
+    bs.force_lower_bound = False
+    alg = lrp_solver(nit=100)
+    # alg.DEBUG=True
+    bs.feasibility_check_alg = alg
+    z_vec, Z_fin, remainder = bs.run(e.generate_S_Q_hmax())
     bler = e.evaluate_bler(z_vec, Z_fin)
     mbler = np.mean(bler)
     wbler = np.max(bler)
-    log.log_mul_scalar(data_name="masso-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler]+bler.tolist())
+    log.log_mul_scalar(data_name="lrp-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler]+bler.tolist())
 

@@ -1,0 +1,5 @@
+REPEAT =  100
+
+RHO =  1e-2
+
+CELL_SIZE = 10
