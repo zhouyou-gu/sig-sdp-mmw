@@ -44,6 +44,7 @@ class binary_search_relaxation(alg_interface,STATS_OBJECT):
 
     def search(self, left, right, state):
         it = 0
+        to_break=False
         while True:
             it += 1
             mid = math.floor(float(left+right)/2.)
@@ -54,12 +55,14 @@ class binary_search_relaxation(alg_interface,STATS_OBJECT):
             elif left + 1 < right and rem == 0:
                 right = mid
             elif left + 1 == right and rem == 0:
-                break
+                to_break = True
             elif left >= right and rem == 0:
-                break
+                to_break = True
             elif left >= right and rem > 0:
                 left+=1
                 right+=1
 
             self._printalltime(left,right,Z,rem,"++++++++++++++++++++")
+            if to_break:
+                break
         return Z, z_vec, rem, it
