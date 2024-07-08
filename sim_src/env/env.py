@@ -71,17 +71,17 @@ class env():
         self.min_sinr = env.db_to_dec(min_sinr_db)
         return self.min_sinr
 
-    def rand_user_mobility(self, mobility_in_meter_s = 0., t_s = 0, resolution_s = 1e-1):
+    def rand_user_mobility(self, mobility_in_meter_s = 0., t_us = 0, resolution_us = 1.):
 
-        if mobility_in_meter_s == 0. or t_s == 0.:
+        if mobility_in_meter_s == 0. or t_us == 0.:
             return
-        n_step = int(t_s/resolution_s)
+        n_step = math.ceil(t_us/resolution_us)
         for n in range(n_step):
             for i in range(self.n_sta):
-                dd = self.sta_dirs[i] * mobility_in_meter_s * resolution_s
+                dd = self.sta_dirs[i] * mobility_in_meter_s * resolution_us/1e-6
                 x = self.sta_locs[i][0] + dd[0]
                 y = self.sta_locs[i][1] + dd[1]
-                if np.linalg.norm(np.array((x,y)),np.inf) <= self.grid_edge:
+                if 0 <= x <= self.grid_edge and 0 <= y <= self.grid_edge:
                     self.sta_locs[i] = np.array([x,y])
                 else:
                     self.sta_dirs[i] = self._get_random_dir()
@@ -233,8 +233,7 @@ class env():
         return bler
     def evaluate_pckl(self,z,Z):
         bler = self.evaluate_bler(z,Z)
-        K = bler.size
-        pckl = np.random.choice([0, 1], size=(K,), p=[bler, 1-bler])
+        pckl = np.array([np.random.choice([0, 1], p=[1-prob, prob]) for prob in bler])
         return pckl
 
 
