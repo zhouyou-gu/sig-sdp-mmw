@@ -211,7 +211,7 @@ class STATS_OBJECT:
     def _get_tim(self,tic_id):
         for t in self.timers:
             if t[0] == tic_id:
-                tim = t[0]
+                tim = t[1]
                 self.timers.remove(t)
                 return (time()-tim)*1e6
         raise Exception("no timer is found.")
