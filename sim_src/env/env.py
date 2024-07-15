@@ -210,18 +210,17 @@ class env():
             signal = S_gain.diagonal()[kidx]
             interference = np.asarray(S_gain_T_no_diag[kidx][:,kidx].sum(axis=1)).ravel()
             sinr[kidx] = signal/(interference+1)
-        print(sinr)
-        # ss = rxpr.tolil().toarray()
-        # asso = np.argmax(ss, axis=1)
-        #
-        # A = ss.shape[1]
-        # for a in range(A):
-        #     for zz in range(Z):
-        #         kidx = np.logical_and(asso == a , z==zz)
-        #         max_sinr = np.max(np.asarray(sinr[kidx]))
-        #         max_sinr_idx = np.argmax(np.asarray(sinr[kidx]))
-        #         sinr[kidx] = 0
-        #         np.asarray(sinr[kidx])[max_sinr_idx] = max_sinr
+        ss = rxpr.tolil().toarray()
+        asso = np.argmax(ss, axis=1).ravel()
+        A = ss.shape[1]
+        for a in range(A):
+            for zz in range(Z):
+                kidx = np.logical_and(asso == a , z==zz)
+                if np.any(kidx):
+                    masked_array = np.ma.masked_array(sinr, ~kidx)
+                    kk = masked_array.argmax(fill_value=-np.inf)
+                    kidx[kk] = False
+                    sinr[kidx] = 1e-3
         return sinr
 
     def evaluate_bler(self,z,Z):
