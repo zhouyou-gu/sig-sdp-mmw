@@ -25,9 +25,9 @@ np.set_printoptions(linewidth=1000)
 
 from sim_script.mmw_test.config import *
 
-it_list = [100,200,300,400,500]
+it_list = [200,400,800,1600,3200]
 
-MMW_ETA = 0.1
+MMW_ETA = 0.05
 
 for it in it_list:
     for seed in range(REPEAT):
@@ -41,5 +41,5 @@ for it in it_list:
         bler = e.evaluate_bler(z_vec, Z_fin)
         mbler = np.mean(bler)
         wbler = np.max(bler)
-        log.log_mul_scalar(data_name="mmw-"+str(int(it))+"-"+str(int(MMW_ETA*100))+"-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler]+bler.tolist())
+        log.log_mul_scalar(data_name="mmw-"+str(int(it))+"-"+str(int(MMW_ETA*1000))+"-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler]+bler.tolist())
 
