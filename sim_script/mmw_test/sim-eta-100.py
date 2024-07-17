@@ -23,7 +23,7 @@ log = CSV_WRITER_OBJECT(path=log_path)
 np.set_printoptions(threshold=10)
 np.set_printoptions(linewidth=1000)
 
-from sim_script.mmw_test.config import *
+from config import *
 
 it_list = [50,100,200,400,800]
 

@@ -23,7 +23,7 @@ log = CSV_WRITER_OBJECT(path=log_path)
 np.set_printoptions(threshold=10)
 np.set_printoptions(linewidth=1000)
 
-from sim_script.framework_test.config import *
+from config import *
 
 for seed in range(REPEAT):
     e = env(cell_size=CELL_SIZE,sta_density_per_1m2=RHO,seed=seed)

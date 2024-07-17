@@ -109,6 +109,8 @@ class admm_sdp_solver(sdp_solver, STATS_OBJECT):
 
         solving_tic = self._get_tic()
         prob.solve(solver=cp.SCS, max_iters=self.nit)
+        if X.value is None:
+            return True, np.random.randn(K,K)
         u, s, v = np.linalg.svd(X.value)
         rank = np.min([K , (Z-1)*self.rank_radio])
         X_half = u[:,0:rank] * np.sqrt(s[0:rank])
