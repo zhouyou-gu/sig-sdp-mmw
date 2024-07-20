@@ -31,6 +31,8 @@ for p in test_density:
 
             S, Q, _ = e.generate_S_Q_hmax()
             S.setdiag(0)
+            S.eliminate_zeros()
+            S.sort_indices()
             non_zero_per_row = np.diff(S.indptr)
             max_non_zero_per_row_gain_in = non_zero_per_row.max()
 
@@ -45,7 +47,8 @@ for p in test_density:
             S_T_S = S_T + S
             non_zero_per_row = np.diff(S_T_S.indptr)
             max_non_zero_per_row_S_T_S = non_zero_per_row.max()
-            out = [e.n_sta,d,p,max_non_zero_per_row_gain_in,max_non_zero_per_row_gain_out,max_non_zero_per_row_asso,max_non_zero_per_row_S_T_S]
+
+            out = [e.n_sta,d,p,Q.nnz + e.n_sta*2,max_non_zero_per_row_gain_in,max_non_zero_per_row_gain_out,max_non_zero_per_row_asso,max_non_zero_per_row_S_T_S]
 
             log.log_mul_scalar(data_name="graph_test",iteration=seed,values=out)
             seed += 1

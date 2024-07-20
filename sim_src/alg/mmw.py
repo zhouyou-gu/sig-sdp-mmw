@@ -10,9 +10,10 @@ from sim_src.util import STATS_OBJECT, profile
 
 
 class mmw(STATS_OBJECT,sdp_solver):
-    def __init__(self, nit=100, rank_radio=2, alpha=1., eta=0.1):
+    def __init__(self, nit=100, rank_radio=2, alpha=1., eta=0.1, log_gap=False):
         sdp_solver.__init__(self, nit=nit, rank_radio=rank_radio, alpha=alpha)
         self.eta = eta
+        self.LOG_GAP = log_gap
 
     def run_with_state(self, bs_iteration, Z, state):
         tic = self._get_tic()
@@ -69,10 +70,52 @@ class mmw(STATS_OBJECT,sdp_solver):
         self._add_np_log("mmw_state_process",0,np.array([Z,K,tim]))
 
         X_avgd = scipy.sparse.csr_matrix((K,K))
+        Y_avgd = np.zeros(C)
         self.N_STEP = 0
         for i in range(self.nit):
-            X_avgd += (X_offdi + X_mdiag)
             self.N_STEP += 1
+            X_avgd += (X_offdi + X_mdiag)
+            Y_avgd += Y
+            if self.LOG_GAP:
+                X_avgd_this =  X_avgd.copy()
+                X_avgd_this.data =  X_avgd_this.data/(self.N_STEP)
+                X_avgd_this_mdiag = X_avgd_this.diagonal()
+                X_avgd_this.setdiag(0)
+                X_avgd_this_offdi = X_avgd_this
+                ## AD, X -> eD
+                eD = (X_avgd_this_mdiag-1.)/(1.-1./K)
+                ## AF, X -> eF
+                XXX = np.asarray(X_avgd_this_offdi[nz_idx_asso_x_ut,nz_idx_asso_y_ut]).ravel()
+                eF = (XXX+1./(Z-1))/(1./(K*(Z-1))+1./2.)
+                ## AH, X -> eH
+                AHX = S_gain_T_no_asso_no_diag*X_avgd_this_offdi
+                eH = ((np.asarray(AHX.sum(axis=1)).ravel()*(Z-1)/Z) - (h_max-(1/Z * S_sum)))/norm_H
+                ## eD, eF, eH, e_accu -> YD, YF, YH, e_accu
+                e_this_max = np.max(np.hstack((eD,eF,eH)))
+
+                ### compute L
+                YY = Y_avgd.copy()/(self.N_STEP)
+                YD = YY[0:K]
+                YF = YY[K:K+E_asso]
+                YH = YY[K+E_asso:2*K+E_asso]
+                ## YD, AD -> LD
+                LD = (scipy.sparse.diags(YD)-np.sum(YD)/K*scipy.sparse.diags(np.ones(K)))/(1.-1./K)
+                ## YF, AF -> LF
+                YF_m = scipy.sparse.coo_matrix((YF, (nz_idx_asso_x_ut, nz_idx_asso_y_ut)), shape=(K, K)).tocsr()
+                YF_m = (YF_m + YF_m.transpose())/2.
+                LF = (YF_m+np.sum(YF)/(K*(Z-1))*scipy.sparse.diags(np.ones(K)))/(1./2.+1./(K*(Z-1)))
+                ## YH, AH -> LH
+                LH = S_gain_T_no_asso_no_diag.copy()
+                LH = csr_scal_rows_inplace(LH,YH)
+                LH = csr_scal_rows_inplace(LH,1./norm_H)
+                LH = (LH + LH.transpose())*(Z-1)/(2*Z)
+                LH = LH - np.sum((1./K*h_max-1/(K*Z)*S_sum)*YH/norm_H)*scipy.sparse.diags(np.ones(K))
+
+                ## LD, LF, LH, -> lamda_min_L
+                s, v = scipy.sparse.linalg.eigsh((LD + LF + LH),k=1,which='SA')
+                lamda_min_L = s[0]*K
+                self._add_np_log("gap",i,np.array([e_this_max,lamda_min_L,e_this_max-lamda_min_L]))
+
             tic_per_it = self._get_tic()
             X_print = X_mdiag + X_offdi
             Y_print = scipy.sparse.coo_matrix((Y[K:K+E_asso], (nz_idx_asso_x_ut, nz_idx_asso_y_ut)), shape=(K, K)).tocsr()

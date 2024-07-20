@@ -21,11 +21,11 @@ plt.rc('ytick', labelsize=FONT_SIZE)  # Font size of the tick labels
 plt.rc('legend', fontsize=FONT_SIZE)  # Font size for legends
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-data_path_in_current_dir = "sim-2024-July-05-22-52-10-ail/graph_test"
+data_path_in_current_dir = "sim_graph_test-2024-July-19-18-23-09-ail"
 
-data_file = os.path.join(current_dir, "sim", data_path_in_current_dir)
+data_file = os.path.join(current_dir, "sim_graph_test", data_path_in_current_dir, "graph_test")
 data = pd.read_csv(data_file)
-data.columns = ['glit', 'it', 'n_sta', 'cell_size', 'density', 'gain_in', 'gain_out', 'association','omega']
+data.columns = ['glit', 'it', 'n_sta', 'cell_size', 'density', 'Q_count', 'gain_in', 'gain_out', 'association','omega']
 
 # Group by cell_size and density, then average the results over repeats
 grouped_data = data.groupby(['n_sta', 'density']).mean().reset_index()
@@ -40,8 +40,8 @@ fig.set_size_inches(fig_width_in, fig_height_in)  # 3.5 inches width, height adj
 
 # Plot settings
 markers = ['o', 's', '^']  # Different markers for each line
-d_names = ['omega','association','n_sta']
-p_names = [r'$\Omega$',r'$\omega$',r'$K$']
+d_names = ['n_sta','omega','Q_count']
+p_names = [r'$K$',r'$\Omega$',r'$C$']
 lines = []
 labels = []
 for a in range(3):
@@ -49,9 +49,9 @@ for a in range(3):
         subset = grouped_data[grouped_data['density'] == density]
         line, = axs[a].plot(subset['cell_size']*20, subset[d_names[a]], marker=markers[i],markersize=5,linewidth=1,markerfacecolor='none')
         lines.append(line)
-    axs[a].set_position([0.157+a*0.31, 0.2, 0.19, 0.6])
+    axs[a].set_position([0.18+a*0.3, 0.2, 0.175, 0.6])
     # Add labels and title
-    axs[a].set_xlabel(r'Cell size $l$ m')
+    axs[a].set_xlabel(r'WTSN size $l$ m')
     axs[a].text(0.1, 0.85, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
 
     axs[a].grid(True)
@@ -65,21 +65,22 @@ ll = 15*20
 axs[0].set_xlim(uu, ll)
 axs[1].set_xlim(uu, ll)
 axs[2].set_xlim(uu, ll)
-axs[0].set_ylim(20, 120)
-axs[1].set_ylim(2, 12)
-axs[2].set_ylim(0, 1000)
+axs[0].set_ylim(0, 1000)
+axs[1].set_ylim(20, 120)
+axs[2].set_ylim(0, 6000)
+axs[2].set_yticks([0, 1000,2000,3000,4000,5000,6000])
 
 
 # Add a legend
-fig.legend(lines[0:3], [r'$\rho=0.005$',r'$\rho=0.075$',r'$\rho=0.01$'],fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.157, 0.84, 0.81, 0.1), mode="expand",ncol = 3 ,borderaxespad=0.1)
+fig.legend(lines[0:3], [r'$\rho=0.005$',r'$\rho=0.075$',r'$\rho=0.01$'],fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.18, 0.84, 0.775, 0.1), mode="expand",ncol = 3 ,borderaxespad=0.1)
 # axs[0].legend(fontsize=8, loc='lower left', bbox_to_anchor=(0, 1.02, 5,0.1), ncol=3,borderaxespad=0.)
 # plt.subplots_adjust(left=0.175, right=0.95,bottom=0.175,top=0.95)
 
 
 # Save the figure as a PDF
-output_path = os.path.join(current_dir, "graph_test") + '.pdf'
+output_path = os.path.join(current_dir, os.path.splitext(os.path.basename(__file__))[0]) + '.pdf'
 
-fig.savefig(output_path, format='pdf', bbox_inches='tight')
+fig.savefig(output_path, format='pdf', bbox_inches='tight', pad_inches=0.)
 
 # Display the plot
 plt.show()
