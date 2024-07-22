@@ -96,6 +96,12 @@ class sdp_solver:
 
         return z_vec, Z, np.sum(not_assigned)
 
+class rand_sdp_solver(sdp_solver, STATS_OBJECT):
+    def run_with_state(self, bs_iteration, Z, state):
+        K = state[0].shape[0]
+        randv = np.random.randn(K,Z*self.rank_radio)
+        randv = randv/np.linalg.norm(randv, axis=1, keepdims=True)
+        return True, randv
 class admm_sdp_solver(sdp_solver, STATS_OBJECT):
     def __init__(self, nit=100, rank_radio=2, alpha=1.):
         sdp_solver.__init__(self, nit=nit, rank_radio=rank_radio, alpha=alpha)
