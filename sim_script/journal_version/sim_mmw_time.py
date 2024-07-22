@@ -23,7 +23,7 @@ log = CSV_WRITER_OBJECT(path=log_path)
 np.set_printoptions(threshold=10)
 np.set_printoptions(linewidth=1000)
 
-REPEAT =  100
+REPEAT =  5
 
 RHO =  75e-4
 
