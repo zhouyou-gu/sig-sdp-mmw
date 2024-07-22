@@ -27,7 +27,7 @@ REPEAT =  100
 
 RHO =  75e-4
 
-for CELL_SIZE in [10]:
+for CELL_SIZE in [5,10,15]:
     for seed in range(REPEAT):
         e = env(cell_size=CELL_SIZE,sta_density_per_1m2=RHO,seed=seed)
         bs = binary_search_relaxation()
