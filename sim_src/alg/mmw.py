@@ -199,6 +199,7 @@ class mmw(STATS_OBJECT,sdp_solver):
             tim = self._get_tim(tic_per_it)
             self._add_np_log("mmw_per_it",i,np.array([Z,K,tim]))
 
+        tic_xavg = self._get_tic()
         X_avgd.data = X_avgd.data/(self.nit)
         s, v = scipy.sparse.linalg.eigsh(-X_avgd,k=1,which='LA')
         self._print("SS###############\n",S_gain_T_no_asso_no_diag[nz_idx_gain_x_ut[0:self.PRINT_DIM],nz_idx_gain_y_ut[0:self.PRINT_DIM]],1/(Z-1))
@@ -216,6 +217,8 @@ class mmw(STATS_OBJECT,sdp_solver):
         # X_half = X_half/np.linalg.norm(X_half, axis=1, keepdims=True)
         XX = np.matmul(X_half[0:self.PRINT_DIM],X_half[0:self.PRINT_DIM].transpose())
         self._print("X_half_ret############\n",XX[0:self.PRINT_DIM,0:self.PRINT_DIM])
+        tim = self._get_tim(tic_xavg)
+        self._add_np_log("mmw_xavg",0,np.array([Z,K,tim]))
         return True, X_half
 
     @staticmethod

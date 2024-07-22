@@ -71,7 +71,7 @@ for a in range(3):
         axs[a].set_yticklabels([])
     # Add labels and title
     axs[a].set_xlabel(r'Number of iterations')
-    # axs[a].text(0.1, 0.85, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
+    axs[a].text(0.8, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
     # axs[a].grid(True)
     if a == len(axs)-1:
         cbar = fig.colorbar(im, ax=axs, location='right', aspect=10, pad=0.015,fraction=0.05,shrink = 1)
