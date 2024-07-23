@@ -16,6 +16,10 @@ class mob_env(env):
 
     def get_period_time_us(self,Z):
         return Z*self.slot_time*1e6
+
+    def step_time(self,time_us,mob_spd_meter_s):
+        self.rand_user_mobility(mob_spd_meter_s,time_us,resolution_us=100000.)
+
 class controller(STATS_OBJECT):
     def __init__(self):
         self.env = None

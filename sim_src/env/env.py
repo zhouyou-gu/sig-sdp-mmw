@@ -78,7 +78,7 @@ class env():
         n_step = math.ceil(t_us/resolution_us)
         for n in range(n_step):
             for i in range(self.n_sta):
-                dd = self.sta_dirs[i] * mobility_in_meter_s * resolution_us/1e-6
+                dd = self.sta_dirs[i] * mobility_in_meter_s * resolution_us/1e6
                 x = self.sta_locs[i][0] + dd[0]
                 y = self.sta_locs[i][1] + dd[1]
                 if 0 <= x <= self.grid_edge and 0 <= y <= self.grid_edge:
