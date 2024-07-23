@@ -45,15 +45,15 @@ for t in range(N_POINTS):
 for i in range(3):
     line, = axs.plot((np.arange(5,5+N_POINTS)*20)**2*75e-4, data_point[:,i], marker=markers[i],linewidth=1,markerfacecolor='none')
     lines.append(line)
-axs.set_position([0.15, 0.215, 0.805, 0.6])
+axs.set_position([0.16, 0.215, 0.805, 0.6])
 # Add labels and title
-axs.set_xlabel(r'WTSN size $l$ m')
+axs.set_xlabel(r'Number of users, $K$')
 axs.grid(True)
 
 
 
 # axs[0].set_ylabel(r'Number of iterations')
-# axs[1].set_ylabel(r'Time (second)')
+axs.set_ylabel(r'Time (second)')
 # # uu = 5*20
 # # ll = 15*20
 # axs[0].set_xlim(5*20, 10*20)
