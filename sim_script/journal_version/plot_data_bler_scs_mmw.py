@@ -21,8 +21,8 @@ plt.rc('ytick', labelsize=FONT_SIZE)  # Font size of the tick labels
 plt.rc('legend', fontsize=FONT_SIZE)  # Font size for legends
 
 
-data_name_list = [r'MMW-$150$',r'MMW-$300$',"ADMM"]
-file_name_list = ["mmw150","mmw300","scs"]
+data_name_list = [r'MMW-$75$',r'MMW-$150$',r'MMW-$300$',"ADMM"]
+file_name_list = ["mmw75","mmw150","mmw300","scs"]
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Plot the data
@@ -47,7 +47,7 @@ for a in [0]:
         cdf = np.arange(1, len(data) + 1) / len(data)
         line, = axs[a].plot(data, cdf,linestyle=linesty[ss],linewidth=1.25,markerfacecolor='none')
         lines.append(line)
-        axs[a].set_position([0.16+a*0.455, 0.215, 0.35, 0.575])
+        axs[a].set_position([0.16+a*0.455, 0.215, 0.35, 0.5])
         # Add labels and title
         axs[a].set_xlabel(r'$\epsilon_k \ \forall k$')
         axs[a].text(0.75, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
@@ -64,7 +64,7 @@ for a in [1]:
         cdf = np.arange(1, len(data) + 1) / len(data)
         line, = axs[a].plot(data, cdf,linestyle=linesty[ss],linewidth=1.25,markerfacecolor='none')
         lines.append(line)
-        axs[a].set_position([0.16+a*0.455, 0.215, 0.35, 0.575])
+        axs[a].set_position([0.16+a*0.455, 0.215, 0.35, 0.5])
         # Add labels and title
         axs[a].set_xlabel(r'$Z$')
         axs[a].text(0.75, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
@@ -100,7 +100,7 @@ axs[1].tick_params(axis='y',direction='in')
 
 
 # Add a legend
-fig.legend(lines[0:3], data_name_list ,fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.16, 0.85, 0.805, 0.1), mode="expand",ncol = 3 ,borderaxespad=0.1,handlelength=1.25)
+fig.legend(lines[0:4], data_name_list ,fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.16, 0.75, 0.805, 0.1), mode="expand",ncol = 2 ,borderaxespad=0.1,handlelength=1.25)
 # axs[0].legend(fontsize=8, loc='lower left', bbox_to_anchor=(0, 1.02, 5,0.1), ncol=3,borderaxespad=0.)
 # plt.subplots_adjust(left=0.175, right=0.95,bottom=0.175,top=0.95)
 

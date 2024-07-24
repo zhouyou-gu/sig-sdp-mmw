@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from sim_src.util import GET_LOG_PATH_FOR_SIM_SCRIPT
 
 FONT_SIZE = 9
-fig_width_px = 350
-fig_height_px = 225
+fig_width_px = 300
+fig_height_px = 250
 dpi = 100  # Typical screen DPI, adjust if necessary
 fig_width_in = fig_width_px / dpi
 fig_height_in = fig_height_px / dpi
@@ -45,7 +45,7 @@ for t in range(N_POINTS):
 for i in range(3):
     line, = axs.plot((np.arange(5,5+N_POINTS)*20)**2*75e-4, data_point[:,i], marker=markers[i],linewidth=1,markerfacecolor='none')
     lines.append(line)
-axs.set_position([0.16, 0.215, 0.805, 0.6])
+axs.set_position([0.18, 0.2, 0.775, 0.75])
 # Add labels and title
 axs.set_xlabel(r'Number of users, $K$')
 axs.grid(True)
@@ -65,13 +65,13 @@ axs.set_ylim(0, 200)
 axs.set_xlim(50, 700)
 # axs[1].set_ylim(0, 10)
 # axs[0].set_yticks([0,2,4,6,8,10])
-# axs[1].set_yticks([0,2,4,6,8,10])
+axs.set_xticks(100*np.arange(8))
 # axs[0].set_yscale('log')
 # axs[1].set_yscale('log')
 
 
 # Add a legend
-fig.legend(lines[0:3], data_name_list ,fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.16, 0.85, 0.805, 0.1), mode="expand",ncol = 3 ,borderaxespad=0.1,handlelength=1)
+fig.legend(lines, data_name_list ,fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.215, 0.625, 0.2, 0.1),ncol = 1 ,borderaxespad=0.1,handlelength=1.5)
 # axs[0].legend(fontsize=8, loc='lower left', bbox_to_anchor=(0, 1.02, 5,0.1), ncol=3,borderaxespad=0.)
 # plt.subplots_adjust(left=0.175, right=0.95,bottom=0.175,top=0.95)
 
