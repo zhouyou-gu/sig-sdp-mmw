@@ -35,6 +35,7 @@ linesty = [':', '-',(0, (3, 1, 1, 1)), (0, (5, 1)),'-','-','-']  # Different mar
 p_names = [r'a',r'b']
 lines = []
 labels = []
+colors = ["#8A2BE2","#F97306","#20B2AA"]
 
 nit = [75,150,300]
 for tt in range(len(nit)):
@@ -49,7 +50,7 @@ for tt in range(len(nit)):
         datas[:,ss] = data
         ratios[:,ss] = datas[:,ss]/datas[:,0]
         # cdf = np.arange(1, len(data) + 1) / len(data)
-    line, = axs.plot(np.arange(10)*0.2,np.mean(ratios,axis=0),marker=markers[tt],linewidth=1.25,markerfacecolor='none')
+    line, = axs.plot(np.arange(10)*0.2,np.mean(ratios,axis=0),color=colors[tt],marker=markers[tt],linewidth=1.25,markerfacecolor='none')
     lines.append(line)
 axs.set_position([0.18, 0.2, 0.775, 0.75])
 # Add labels and title

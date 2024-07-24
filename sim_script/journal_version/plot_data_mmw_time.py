@@ -32,7 +32,7 @@ fig.set_size_inches(fig_width_in, fig_height_in)  # 3.5 inches width, height adj
 
 N_REPEAT = 20
 # Plot settings
-markers = ['o', 's', '^','+']  # Different markers for each line
+markers = ['+', 'x', 'd']  # Different markers for each line
 bar_fill_patterns = ['///', '\\\\\\', '---','+', 'x', 'o']
 
 p_names = [r'a',r'b']
@@ -52,8 +52,9 @@ for t in range(5,16):
 x = np.arange(11)
 bar_width = 1
 lines = []
+colors = ["#FC5A50","#FF8C00","#069AF3"]
 for i in range(3):
-    line, = axs.plot(((x+5)*20)**2*75e-4, data_points[i],marker=markers[i],linewidth=1.25,markerfacecolor='none')
+    line, = axs.plot(((x+5)*20)**2*75e-4, data_points[i],color=colors[i],marker=markers[i],linewidth=1.25,markerfacecolor='none')
     lines.append(line)
 
 axs.set_position([0.18, 0.2, 0.775, 0.75])

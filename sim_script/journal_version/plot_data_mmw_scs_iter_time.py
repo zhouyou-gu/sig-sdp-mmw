@@ -31,7 +31,7 @@ fig.set_size_inches(fig_width_in, fig_height_in)  # 3.5 inches width, height adj
 N_REPEAT = 20
 N_POINTS = 11
 # Plot settings
-markers = ['o', 's', '^','+']  # Different markers for each line
+markers = ['v', '^', 'o','+']  # Different markers for each line
 p_names = [r'a',r'b']
 lines = []
 labels = []
