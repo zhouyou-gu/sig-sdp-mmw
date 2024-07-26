@@ -72,7 +72,7 @@ axs[2].set_yticks([0, 1000,2000,3000,4000,5000,6000])
 
 
 # Add a legend
-fig.legend(lines[0:3], [r'$\rho=0.005$',r'$\rho=0.075$',r'$\rho=0.01$'],fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.18, 0.84, 0.775, 0.1), mode="expand",ncol = 3 ,borderaxespad=0.1)
+fig.legend(lines[0:3], [r'$\rho=0.005$',r'$\rho=0.0075$',r'$\rho=0.01$'],fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.18, 0.84, 0.775, 0.1), mode="expand",ncol = 3 ,borderaxespad=0.1,handlelength=1.5)
 # axs[0].legend(fontsize=8, loc='lower left', bbox_to_anchor=(0, 1.02, 5,0.1), ncol=3,borderaxespad=0.)
 # plt.subplots_adjust(left=0.175, right=0.95,bottom=0.175,top=0.95)
 

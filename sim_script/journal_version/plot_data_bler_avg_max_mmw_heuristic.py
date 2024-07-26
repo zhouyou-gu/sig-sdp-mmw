@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from sim_src.util import GET_LOG_PATH_FOR_SIM_SCRIPT
 
 FONT_SIZE = 9
-fig_width_px = 350
+fig_width_px = 400
 fig_height_px = 225
 dpi = 100  # Typical screen DPI, adjust if necessary
 fig_width_in = fig_width_px / dpi
@@ -42,16 +42,16 @@ for a in [0]:
         data_point = np.zeros(N_POINTS)
         for t in range(N_POINTS):
             fname = s+"-"+str(t+5)+"-"+"75"
-            data_file = os.path.join(current_dir, "sim_all_bler","sim_all_bler-2024-July-21-02-32-37-ail",fname)
+            data_file = os.path.join(current_dir, "sim_all_bler","sim_all_bler-2024-July-26-17-21-51-ail",fname)
             data = np.genfromtxt(data_file, delimiter=',')
-            data = data[:, 3]
-            data_point[t] = np.mean(data)
+            data = data[:, 3:]
+            data_point[t] = np.mean(np.max(data,axis=1))
         line, = axs[a].plot(np.arange(5,5+N_POINTS)*20, data_point, marker=markers[ss],linewidth=1,markerfacecolor='none')
         lines.append(line)
-        axs[a].set_position([0.16+a*0.455, 0.215, 0.35, 0.6])
+        axs[a].set_position([0.16+a*0.5, 0.215, 0.3, 0.6])
         # Add labels and title
         axs[a].set_xlabel(r'WTSN size $l$ m')
-        axs[a].text(0.4, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
+        # axs[a].text(0.4, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
         axs[a].grid(True)
 
 for a in [1]:
@@ -60,19 +60,20 @@ for a in [1]:
         data_point = np.zeros(N_POINTS)
         for t in range(N_POINTS):
             fname = s+"-"+str(t+5)+"-"+"75"
-            data_file = os.path.join(current_dir, "sim_all_bler","sim_all_bler-2024-July-21-02-32-37-ail",fname)
+            data_file = os.path.join(current_dir, "sim_all_bler","sim_all_bler-2024-July-26-17-21-51-ail",fname)
             data = np.genfromtxt(data_file, delimiter=',')
-            data = data[:, 4]
+            data = data[:, 3:]
             data_point[t] = np.mean(data)
         line, = axs[a].plot(np.arange(5,5+N_POINTS)*20, data_point, marker=markers[ss],linewidth=1,markerfacecolor='none')
         lines.append(line)
-        axs[a].set_position([0.16+a*0.455, 0.215, 0.35, 0.6])
+        axs[a].set_position([0.16+a*0.5, 0.215, 0.3, 0.6])
         # Add labels and title
         axs[a].set_xlabel(r'WTSN size $l$ m')
-        axs[a].text(0.4, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
+        # axs[a].text(0.4, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
         axs[a].grid(True)
 
-axs[0].set_ylabel(r'Error rates')
+axs[0].set_ylabel(r'Worse-case error rates')
+axs[1].set_ylabel(r'Average error rates')
 # uu = 5*20
 # ll = 15*20
 axs[0].set_xlim(5*20, 15*20)
@@ -81,6 +82,7 @@ axs[1].set_xlim(5*20, 15*20)
 # axs[1].set_xlim(uu, ll)
 # axs[2].set_xlim(uu, ll)
 axs[0].set_ylim(1e-5, 1)
+axs[0].set_yticks([1e-2,1e-1])
 axs[1].set_ylim(1e-5, 1)
 # axs[1].set_yticks([])
 axs[0].set_yscale('log')
@@ -96,7 +98,7 @@ fig.legend(lines[0:4], data_name_list ,fontsize=FONT_SIZE, loc='lower left', bbo
 # Save the figure as a PDF
 output_path = os.path.join(current_dir, os.path.splitext(os.path.basename(__file__))[0]) + '.pdf'
 
-fig.savefig(output_path, format='pdf', bbox_inches='tight', pad_inches=0.)
+fig.savefig(output_path, format='pdf', pad_inches=0.)
 
 # Display the plot
 plt.show()

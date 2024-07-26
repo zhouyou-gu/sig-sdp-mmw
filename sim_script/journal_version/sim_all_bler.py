@@ -37,7 +37,7 @@ for CELL_SIZE in range(5,16):
         bler = e.evaluate_bler(z_vec, Z_fin)
         mbler = np.mean(bler)
         wbler = np.max(bler)
-        log.log_mul_scalar(data_name="mmw-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler])
+        log.log_mul_scalar(data_name="mmw-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin] + bler.tolist())
 
         alg = rand_sdp_solver()
         _, gX = alg.run_with_state(0,Z_fin,e.generate_S_Q_hmax())
@@ -45,7 +45,7 @@ for CELL_SIZE in range(5,16):
         bler = e.evaluate_bler(z_vec, Z_fin)
         mbler = np.mean(bler)
         wbler = np.max(bler)
-        log.log_mul_scalar(data_name="rand-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler])
+        log.log_mul_scalar(data_name="rand-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin] + bler.tolist())
 
         alg = lrp_solver(nit=100)
         _, gX = alg.run_with_state(0,Z_fin,e.generate_S_Q_hmax())
@@ -53,16 +53,16 @@ for CELL_SIZE in range(5,16):
         bler = e.evaluate_bler(z_vec, Z_fin)
         mbler = np.mean(bler)
         wbler = np.max(bler)
-        log.log_mul_scalar(data_name="ladmm-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler])
+        log.log_mul_scalar(data_name="ladmm-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin] + bler.tolist())
 
         z_vec, _, _ = MAX_GAIN.run(Z_fin,state=(e.generate_S_Q_hmax()))
         bler = e.evaluate_bler(z_vec, Z_fin)
         mbler = np.mean(bler)
         wbler = np.max(bler)
-        log.log_mul_scalar(data_name="mgain-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler])
+        log.log_mul_scalar(data_name="mgain-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin] + bler.tolist())
 
         z_vec, _, _ = MAX_ASSO.run(Z_fin,state=(e.generate_S_Q_hmax()))
         bler = e.evaluate_bler(z_vec, Z_fin)
         mbler = np.mean(bler)
         wbler = np.max(bler)
-        log.log_mul_scalar(data_name="masso-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin,mbler,wbler])
+        log.log_mul_scalar(data_name="masso-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin] + bler.tolist())
