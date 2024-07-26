@@ -27,16 +27,9 @@ REPEAT =  100
 
 RHO =  75e-4
 
-for CELL_SIZE in [10]:
+for CELL_SIZE in [5,10,15]:
     for seed in range(REPEAT):
         e = env(cell_size=CELL_SIZE,sta_density_per_1m2=RHO,seed=seed)
-        bs = binary_search_relaxation()
-        alg = rand_sdp_solver()
-        bs.feasibility_check_alg = alg
-        z_vec, Z_fin, remainder = bs.run(e.generate_S_Q_hmax())
-        bler = e.evaluate_bler(z_vec, Z_fin)
-        log.log_mul_scalar(data_name="rand-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin]+bler.tolist())
-
         bs = binary_search_relaxation()
         alg = mmw(nit=150,eta=0.04)
         bs.feasibility_check_alg = alg
@@ -44,9 +37,3 @@ for CELL_SIZE in [10]:
         bler = e.evaluate_bler(z_vec, Z_fin)
         log.log_mul_scalar(data_name="mmw150-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin]+bler.tolist())
 
-        bs = binary_search_relaxation()
-        alg = admm_sdp_solver()
-        bs.feasibility_check_alg = alg
-        z_vec, Z_fin, remainder = bs.run(e.generate_S_Q_hmax())
-        bler = e.evaluate_bler(z_vec, Z_fin)
-        log.log_mul_scalar(data_name="scs-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=[Z_fin]+bler.tolist())

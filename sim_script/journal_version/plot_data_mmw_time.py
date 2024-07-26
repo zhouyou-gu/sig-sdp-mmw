@@ -84,7 +84,7 @@ axs.set_ylim(0, 6)
 
 
 # Add a legend
-fig.legend(lines, data_name_list ,fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.215, 0.625, 0.2, 0.1),ncol = 1 ,borderaxespad=0.1,handlelength=1.5)
+fig.legend(lines, data_name_list ,fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.215, 0.625, 0.2, 0.1),ncol = 1 ,borderaxespad=0.1,handlelength=1.5,fancybox=True, framealpha=1)
 # axs[0].legend(fontsize=8, loc='lower left', bbox_to_anchor=(0, 1.02, 5,0.1), ncol=3,borderaxespad=0.)
 # plt.subplots_adjust(left=0.175, right=0.95,bottom=0.175,top=0.95)
 
@@ -92,7 +92,7 @@ fig.legend(lines, data_name_list ,fontsize=FONT_SIZE, loc='lower left', bbox_to_
 # Save the figure as a PDF
 output_path = os.path.join(current_dir, os.path.splitext(os.path.basename(__file__))[0]) + '.pdf'
 
-fig.savefig(output_path, format='pdf', bbox_inches='tight', pad_inches=0.)
+fig.savefig(output_path, format='pdf', pad_inches=0.)
 
 # Display the plot
 plt.show()

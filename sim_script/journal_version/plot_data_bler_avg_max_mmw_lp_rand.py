@@ -21,8 +21,8 @@ plt.rc('ytick', labelsize=FONT_SIZE)  # Font size of the tick labels
 plt.rc('legend', fontsize=FONT_SIZE)  # Font size for legends
 
 
-data_name_list = ["MMW","LP","MINTP","MASSO"]
-file_name_list = ["mmw","ladmm","mgain","masso"]
+data_name_list = ["Proposed","RAND","LP"]
+file_name_list = ["mmw","rand","ladmm"]
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Plot the data
@@ -32,8 +32,8 @@ fig.set_size_inches(fig_width_in, fig_height_in)  # 3.5 inches width, height adj
 N_REPEAT = 100
 N_POINTS = 11
 # Plot settings
-markers = ['o', 's', '^','+']  # Different markers for each line
-p_names = [r'a',r'b']
+markers = ['o', 's', '^','+','x']  # Different markers for each line
+p_names = ['Average','Worst-case']
 lines = []
 labels = []
 for a in [0]:
@@ -51,7 +51,7 @@ for a in [0]:
         axs[a].set_position([0.16+a*0.455, 0.215, 0.35, 0.6])
         # Add labels and title
         axs[a].set_xlabel(r'WTSN size $l$ m')
-        axs[a].text(0.75, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
+        axs[a].text(0.4, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
         axs[a].grid(True)
 
 for a in [1]:
@@ -69,7 +69,7 @@ for a in [1]:
         axs[a].set_position([0.16+a*0.455, 0.215, 0.35, 0.6])
         # Add labels and title
         axs[a].set_xlabel(r'WTSN size $l$ m')
-        axs[a].text(0.75, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
+        axs[a].text(0.4, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
         axs[a].grid(True)
 
 axs[0].set_ylabel(r'Error rates')
@@ -88,7 +88,7 @@ axs[1].set_yscale('log')
 
 
 # Add a legend
-fig.legend(lines[0:4], data_name_list ,fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.16, 0.85, 0.805, 0.1), mode="expand",ncol = 4 ,borderaxespad=0.1,handlelength=1)
+fig.legend(lines[0:4], data_name_list ,fontsize=FONT_SIZE, loc='lower left', bbox_to_anchor=(0.16, 0.85, 0.805, 0.1), mode="expand",ncol = 4 ,borderaxespad=0.1,handlelength=1.5)
 # axs[0].legend(fontsize=8, loc='lower left', bbox_to_anchor=(0, 1.02, 5,0.1), ncol=3,borderaxespad=0.)
 # plt.subplots_adjust(left=0.175, right=0.95,bottom=0.175,top=0.95)
 
