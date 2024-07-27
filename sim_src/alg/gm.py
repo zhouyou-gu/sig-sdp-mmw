@@ -6,7 +6,7 @@ from sim_src.util import STATS_OBJECT
 class MAX_GAIN(STATS_OBJECT):
 
     @staticmethod
-    def run(Z,state,nattempt=1):
+    def run(Z,state,nattempt=1,not_Z_bound=False):
         K = state[0].shape[0]
         S_gain = state[0].copy()
         Q_asso = state[1]
@@ -19,6 +19,8 @@ class MAX_GAIN(STATS_OBJECT):
 
         z_vec = np.zeros(K)
         ZZ = 0
+        if not_Z_bound:
+            Z=K
         for z in range(Z):
             ZZ += 1
             tmp_gain_sum = np.zeros(K)
@@ -56,7 +58,10 @@ class MAX_GAIN(STATS_OBJECT):
                 break
 
         if not np.all(not_assigned == False):
-            z_vec[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))
+            if not_Z_bound:
+                z_vec[not_assigned] = np.random.randint(ZZ,size = int(not_assigned.sum()))
+            else:
+                z_vec[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))
 
         return z_vec, ZZ, np.sum(not_assigned)
 
@@ -64,7 +69,7 @@ class MAX_GAIN(STATS_OBJECT):
 class MAX_ASSO(STATS_OBJECT):
 
     @staticmethod
-    def run(Z,state,nattempt=1):
+    def run(Z,state,nattempt=1,not_Z_bound=False):
         K = state[0].shape[0]
         S_gain = state[0].copy()
         Q_asso = state[1]
@@ -77,6 +82,8 @@ class MAX_ASSO(STATS_OBJECT):
 
         z_vec = np.zeros(K)
         ZZ = 0
+        if not_Z_bound:
+            Z=K
         for z in range(Z):
             ZZ += 1
             tmp_gain_sum = np.zeros(K)
@@ -114,7 +121,10 @@ class MAX_ASSO(STATS_OBJECT):
                 break
 
         if not np.all(not_assigned == False):
-            z_vec[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))
+            if not_Z_bound:
+                z_vec[not_assigned] = np.random.randint(ZZ,size = int(not_assigned.sum()))
+            else:
+                z_vec[not_assigned] = np.random.randint(Z,size = int(not_assigned.sum()))
 
         return z_vec, ZZ, np.sum(not_assigned)
 
