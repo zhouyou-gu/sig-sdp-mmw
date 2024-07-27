@@ -50,8 +50,8 @@ for a in [0]:
         lines.append(line)
         axs[a].set_position([0.16+a*0.455, 0.215, 0.35, 0.575])
         # Add labels and title
-        axs[a].set_xlabel(r'$Z$')
-        axs[a].text(0.775, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
+        axs[a].set_xlabel(r'minimum slots, $Z$')
+        # axs[a].text(0.775, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
         axs[a].grid(True)
 
 for a in [1]:
@@ -67,8 +67,8 @@ for a in [1]:
         lines.append(line)
         axs[a].set_position([0.16+a*0.455, 0.215, 0.35, 0.575])
         # Add labels and title
-        axs[a].set_xlabel(r'$\epsilon_k \ \forall k$')
-        axs[a].text(0.775, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
+        axs[a].set_xlabel(r'error rates, $\epsilon_k \ \forall k$')
+        # axs[a].text(0.775, 0.1, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
         axs[a].grid(True)
 
 

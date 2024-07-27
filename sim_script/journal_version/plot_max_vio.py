@@ -35,7 +35,7 @@ N_REPEAT = 20
 N_POINTS = 6
 # Plot settings
 markers = ['o', 's', '^','+']  # Different markers for each line
-p_names = [r'a',r'b',r'c']
+p_names = [r'i',r'ii',r'iii']
 lines = []
 labels = []
 T = [5,10,15]
