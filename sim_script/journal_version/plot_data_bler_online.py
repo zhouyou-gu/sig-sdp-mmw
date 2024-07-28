@@ -43,7 +43,7 @@ cell_size_list = [10]
 bars = []
 
 for a in [0]:
-    file_name_list = ["mgain","mmw","mmw50","ideal"]
+    file_name_list = ["mgain","mmw"]
     for tt in range(len(file_name_list)):
         t = file_name_list[tt]
         datas = np.zeros((100,11))
@@ -58,7 +58,7 @@ for a in [0]:
             # cdf = np.arange(1, len(data) + 1) / len(data)
         index = np.arange(6)*2
         bar_width = 0.5
-        b = axs[a].bar(index + tt * bar_width - (len(data_name_list)-2)*bar_width/2., np.mean(datas,axis=0)[0:11:2], bar_width, label=file_name_list[tt],color=colors[tt])
+        b = axs[a].bar(index + tt * bar_width - (len(data_name_list)-1)*bar_width/2., np.mean(datas,axis=0)[0:11:2], bar_width, label=file_name_list[tt],color=colors[tt])
         bars.append(b)
     axs[a].set_position([0.2, 0.2+a*0.4, 0.775, 0.6])
     # Add labels and title
