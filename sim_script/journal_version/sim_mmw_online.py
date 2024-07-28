@@ -46,7 +46,36 @@ for CELL_SIZE in [10]:
             e.step_time(tim,mob_spd_meter_s=0.1)
             z_vec, _, _ = alg.rounding(Z_fin,gX,e.generate_S_Q_hmax())
 
+        e = mob_env(cell_size=CELL_SIZE,sta_density_per_1m2=RHO,seed=seed)
+        bs = binary_search_relaxation()
+        tic = bs._get_tic()
+        alg = mmw(nit=75,eta=0.04)
+        bs.feasibility_check_alg = alg
+        z_vec, Z_fin, remainder = bs.run(e.generate_S_Q_hmax())
+        _, gX = alg.run_with_state(0,Z_fin,e.generate_S_Q_hmax())
+        tim = bs._get_tim(tic)
+        print(tim,Z_fin)
+        for i in range(N_SPEED):
+            bler = e.evaluate_bler(z_vec, Z_fin)
+            log.log_mul_scalar(data_name="online-mmw75-"+str(i)+"-"+str(150)+"-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=bler.tolist())
+            e.step_time(tim,mob_spd_meter_s=0.1)
+            z_vec, _, _ = alg.rounding(Z_fin,gX,e.generate_S_Q_hmax())
 
+
+        e = mob_env(cell_size=CELL_SIZE,sta_density_per_1m2=RHO,seed=seed)
+        bs = binary_search_relaxation()
+        tic = bs._get_tic()
+        alg = mmw(nit=150,eta=0.04)
+        bs.feasibility_check_alg = alg
+        z_vec, Z_fin, remainder = bs.run(e.generate_S_Q_hmax())
+        _, gX = alg.run_with_state(0,Z_fin,e.generate_S_Q_hmax())
+        tim = bs._get_tim(tic)
+        print(tim,Z_fin)
+        for i in range(N_SPEED):
+            bler = e.evaluate_bler(z_vec, Z_fin)
+            log.log_mul_scalar(data_name="online-ideal-"+str(i)+"-"+str(150)+"-"+str(CELL_SIZE)+"-"+str(int(RHO*10000)),iteration=seed,values=bler.tolist())
+            e.step_time(0,mob_spd_meter_s=0.1)
+            z_vec, _, _ = alg.rounding(Z_fin,gX,e.generate_S_Q_hmax())
 
         e = mob_env(cell_size=CELL_SIZE,sta_density_per_1m2=RHO,seed=seed)
         bs = binary_search_relaxation()

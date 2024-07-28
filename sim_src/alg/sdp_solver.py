@@ -14,7 +14,16 @@ class sdp_solver:
     def run_with_state(self, bs_iteration, Z, state):
         pass
 
-    def rounding(self,Z,gX,state,nattempt=1):
+    def rounding(self,Z,gX,state,nattempt=10):
+        z_vec = None
+        remainder = None
+        for n in range(nattempt):
+            z_vec, Z, remainder = self.rounding_one_attempt(Z,gX,state)
+            if remainder == 0:
+                return z_vec, Z, remainder
+        return z_vec, Z, remainder
+
+    def rounding_one_attempt(self,Z,gX,state):
         K = state[0].shape[0]
         D = gX.shape[1]
         S_gain = state[0].copy()

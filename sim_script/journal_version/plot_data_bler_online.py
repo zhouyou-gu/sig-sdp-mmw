@@ -36,14 +36,14 @@ linesty = [':', '-',(0, (3, 1, 1, 1)), (0, (5, 1)),'-','-','-']  # Different mar
 p_names = [r'a',r'b']
 lines = []
 labels = []
-colors = ["#8A2BE2","#F97306","#20B2AA"]
+colors = ["#8A2BE2","#F97306","#20B2AA","#FF1493"]
 bar_fill_patterns = ['///', '\\\\\\', '|||', '---']
 
 cell_size_list = [10]
 bars = []
 
 for a in [0]:
-    file_name_list = ["mgain","mmw"]
+    file_name_list = ["mgain","mmw","mmw50","ideal"]
     for tt in range(len(file_name_list)):
         t = file_name_list[tt]
         datas = np.zeros((100,11))
