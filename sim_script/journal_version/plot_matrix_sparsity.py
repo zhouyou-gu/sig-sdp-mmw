@@ -9,7 +9,7 @@ from sim_src.env.env import env
 from sim_src.util import *
 
 FONT_SIZE = 9
-fig_width_px = 425
+fig_width_px = 400
 fig_height_px = 175
 dpi = 100  # Typical screen DPI, adjust if necessary
 fig_width_in = fig_width_px / dpi
@@ -27,7 +27,7 @@ plt.rc('legend', fontsize=FONT_SIZE)  # Font size for legends
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Plot the data
-fig, axs = plt.subplots(1,3,)
+fig, axs = plt.subplots(1,3,layout="constrained")
 fig.set_size_inches(fig_width_in, fig_height_in)  # 3.5 inches width, height adjusted to maintain aspect ratio
 
 
@@ -63,9 +63,12 @@ for a in range(3):
     mats[a] = mats[a][:, perm]
     row_indices, col_indices = mats[a].nonzero()
 
-    axs[a].scatter(row_indices, col_indices,s=0.05/(a+1)**2)
+    axs[a].scatter(row_indices, col_indices,s=0.05/(a+1)**2,rasterized=True)
     axs[a].set_aspect('equal', 'box')
-    axs[a].set_position([0.035+a*(x+0.), 0.15, x, y])
+    # pos = axs[a].get_position()
+    # new_pos = [pos.x0, pos.y0, pos.width, pos.width]
+    # axs[a].set_position(new_pos)
+    # axs[a].set_position([0.035+a*(x+0.1), 0.15, x, y])
     # Add labels and title
     # axs[a].set_xlabel(r'WTSN size $l$ m')
     axs[a].text(0.05, 0.025, p_names[a], transform=axs[a].transAxes, fontsize=FONT_SIZE)
@@ -102,7 +105,7 @@ ll = 15*20
 # Save the figure as a PDF
 output_path = os.path.join(current_dir, os.path.splitext(os.path.basename(__file__))[0]) + '.pdf'
 
-fig.savefig(output_path, format='pdf', bbox_inches='tight', pad_inches=0.)
+fig.savefig(output_path, format='pdf', bbox_inches='tight', pad_inches=0., dpi=100)
 
 # Display the plot
 plt.show()
