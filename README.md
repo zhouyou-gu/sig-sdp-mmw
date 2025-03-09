@@ -20,7 +20,7 @@ pip3 install -r requirements.txt
 <mark>Please ensure the SCS backend of the cvxpy is properly installed in the above. See [here](https://www.cvxpy.org/tutorial/solvers/index.html).<mark>
 
 ## Reproducing Results in the Paper
-All Results in the paper can be reproduced using the scripts in [sim_script/journal_version](sim_script/journal_version)
+All results in the paper can be reproduced using the scripts in [sim_script/journal_version](sim_script/journal_version)
 
 
 
