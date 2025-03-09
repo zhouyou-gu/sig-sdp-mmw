@@ -1,0 +1,7 @@
+cvxpy
+line_profiler
+matplotlib
+numpy
+pandas
+scipy
+torch
