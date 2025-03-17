@@ -1,4 +1,4 @@
-<h1 align="center">✨IM-MMW✨</h1>
+<h1 align="center">✨SIG-SDP-MMW✨</h1>
 
 Source Codes for our paper, "[SIG-SDP: Sparse Interference Graph-Aided Semidefinite Programming for Large-Scale Wireless Time-Sensitive Networking](https://arxiv.org/pdf/2501.11307)," authored by Zhouyou Gu, Jihong Park, Branka Vucetic, Jinho Choi.
 ![system](im-mmw.png)
