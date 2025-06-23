@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 import cvxpy as cp
+import scipy.sparse
 
 from sim_src.util import STATS_OBJECT, profile
 
@@ -160,3 +161,25 @@ class admm_sdp_solver(sdp_solver, STATS_OBJECT):
         prob = cp.Problem(cp.Minimize(0), constraints)
 
         return prob, X
+        
+class spectral_sdp_solver(sdp_solver, STATS_OBJECT):
+    def __init__(self, nit=100, rank_radio=2, alpha=1.):
+        sdp_solver.__init__(self, nit=nit, rank_radio=rank_radio, alpha=alpha)
+    
+    def run_with_state(self, bs_iteration, Z, state):
+        ps_tic = self._get_tic()
+        S_gain = state[0]
+        K = S_gain.shape[0]
+        S_gain_sym = S_gain + S_gain.transpose()
+        S_gain_sym.setdiag(0)
+        S_gain_sym.eliminate_zeros()
+        Laplacian = scipy.sparse.csgraph.laplacian(S_gain_sym, normed=False)
+        tim = self._get_tim(ps_tic)
+        self._add_np_log("spectral_problem_setup",bs_iteration,np.array([Z,K,tim]))
+
+        solving_tic = self._get_tic()
+        eigvals, eigvecs = scipy.sparse.linalg.eigsh(Laplacian, k=Z, which='LM', return_eigenvectors=True, tol=1e-5)
+        normed_eigvecs = eigvecs / np.linalg.norm(eigvecs, axis=1, keepdims=True)
+        tim = self._get_tim(solving_tic)
+        self._add_np_log("spectral_solve",bs_iteration,np.array([Z,K,tim]))
+        return True, normed_eigvecs

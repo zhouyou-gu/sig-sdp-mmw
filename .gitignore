@@ -1,4 +1,5 @@
 *-ail
+*-ail/*
 .idea/*
 .DS_Store
 # Byte-compiled / optimized / DLL files
@@ -12,7 +13,6 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
-build-vscode/
 develop-eggs/
 dist/
 downloads/
