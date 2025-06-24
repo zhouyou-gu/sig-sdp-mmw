@@ -10,7 +10,7 @@ class sdp_solver:
     def __init__(self, nit=100, rank_radio=2, alpha=1.):
         self.nit = nit
         self.rank_radio = rank_radio
-        self.alpha = alpha
+        self.alpha = alpha # alpha is the scaling factor for the objective function, not used in this implementation
 
     def run_with_state(self, bs_iteration, Z, state):
         pass

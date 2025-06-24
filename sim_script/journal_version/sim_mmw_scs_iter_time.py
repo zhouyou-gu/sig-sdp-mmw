@@ -32,7 +32,7 @@ for CELL_SIZE in range(13,16):
         e = env(cell_size=CELL_SIZE,sta_density_per_1m2=RHO,seed=seed)
 
         res = []
-
+        print("MMW")
         bs = binary_search_relaxation()
         tic = bs._get_tic()
         alg = mmw(nit=150,eta=0.04)
@@ -44,6 +44,7 @@ for CELL_SIZE in range(13,16):
         res.append(d)
         res.append(tim)
 
+        print("SCS")
         bs = binary_search_relaxation()
         tic = bs._get_tic()
         alg = admm_sdp_solver(nit=100)
@@ -55,6 +56,7 @@ for CELL_SIZE in range(13,16):
         res.append(d)
         res.append(tim)
 
+        print("MWM-NB")
         bs = binary_search_relaxation()
         tic = bs._get_tic()
         alg = mmw(nit=150,eta=0.04)
