@@ -66,7 +66,6 @@ for a in [0]:
             data = np.mean(data[:, 2:],axis=1)
             datas[:,ss] = data
             ratios[:,ss] = datas[:,ss]/datas[:,0]
-            # cdf = np.arange(1, len(data) + 1) / len(data)
         index = np.arange(5)*2
         bar_width = 0.4
         b = axs[a].bar(index + tt * bar_width - (len(data_name_list)-1)*bar_width/2., np.mean(datas,axis=0)[2:11:2], bar_width, label=file_name_list[tt],color=colors[tt])

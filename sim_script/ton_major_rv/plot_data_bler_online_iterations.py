@@ -11,14 +11,25 @@ dpi = 100  # Typical screen DPI, adjust if necessary
 fig_width_in = fig_width_px / dpi
 fig_height_in = fig_height_px / dpi
 
-plt.rc('font', family='serif')
-plt.rc('mathtext', fontset='cm')
-plt.rc('font', size=FONT_SIZE)  # Default font size
-plt.rc('axes', titlesize=FONT_SIZE)  # Font size of the axes title
-plt.rc('axes', labelsize=FONT_SIZE)  # Font size of the x and y labels
-plt.rc('xtick', labelsize=FONT_SIZE)  # Font size of the tick labels
-plt.rc('ytick', labelsize=FONT_SIZE)  # Font size of the tick labels
-plt.rc('legend', fontsize=FONT_SIZE)  # Font size for legends
+plt.rcParams.update({
+    # --- make every normal string use Times or the best fall-back ----
+    'font.family' : 'serif',
+    'font.serif'  : ['Times New Roman', 'Times', 'Nimbus Roman', 'STIXGeneral'],
+
+    # --- make math ($…$) also use Times-compatible glyphs ------------
+    'mathtext.fontset' : 'stix',      # STIX is designed to pair with Times
+    'mathtext.rm'      : 'Times New Roman',   # roman/regular
+    'mathtext.it'      : 'Times New Roman:italic',
+    'mathtext.bf'      : 'Times New Roman:bold',
+
+    # --- keep your existing sizing rules ----------------------------
+    'font.size'        : FONT_SIZE,
+    'axes.titlesize'   : FONT_SIZE,
+    'axes.labelsize'   : FONT_SIZE,
+    'xtick.labelsize'  : FONT_SIZE,
+    'ytick.labelsize'  : FONT_SIZE,
+    'legend.fontsize'  : FONT_SIZE,
+})
 
 
 data_name_list = [r'$N=2$',r'$N=10$',r'$N=50$',r'$N=150$']
@@ -58,7 +69,7 @@ for a in [0]:
             ratios[:,ss] = datas[:,ss]/datas[:,0]
         index = np.arange(5)*2
         bar_width = 0.4
-        b = axs[a].bar(index + tt * bar_width - (len(data_name_list)-1)*bar_width/2., np.mean(datas,axis=0)[2:11:2], bar_width, label=str(nit),color=colors[tt%4])
+        b = axs[a].bar(index + tt * bar_width - (len(data_name_list)-1)*bar_width/2., np.mean(datas,axis=0)[2:11:2], bar_width, label=str(nit),color=colors[tt])
         bars.append(b)
     axs[a].set_position([0.2, 0.2+a*0.4, 0.775, 0.625])
     # Add labels and title

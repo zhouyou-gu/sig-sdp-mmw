@@ -37,22 +37,24 @@ bar_fill_patterns = ['///', '\\\\\\', '---','+', 'x', 'o']
 
 data_points = np.zeros((3,11))
 
-data_file = os.path.join(current_dir, "sim_convergence_rho/sim_convergence_rho-2025-June-24-22-41-29-ail/mmw-dual-10-4")
+data_file = os.path.join(current_dir, "sim_convergence_rho/sim_convergence_rho-2025-June-26-13-00-11-ail/mmw-dual-10-4")
 data = np.genfromtxt(data_file, delimiter=',')
 lines = []
 colors = ["#FC5A50","#FF8C00","#069AF3"]
 for i in range(5):
-    ub = data[2*i, 3:]
-    lb = data[2*i+1, 3:]
-    gap = ub-lb
-    gap = gap/gap[0]
-    
-    line, = axs.plot(gap, linestyle='-', linewidth=1.25)
+    gap_all = np.zeros(data.shape[1]-3)
+    for repeat in range(5):
+        ub = data[20*i*2+repeat*2, 3:]
+        lb = data[20*i*2+repeat*2+1, 3:]
+        gap = ub
+        gap = gap/gap[0]
+        gap_all += gap
+    gap_all /= 5
+    line, = axs.plot(gap_all, linestyle='-', linewidth=1.25)
     lines.append(line)
 
 
-
-axs.set_position([0.18, 0.275, 0.775, 0.65])
+axs.set_position([0.19, 0.275, 0.77, 0.65])
 # Add labels and title
 axs.set_xlabel(r'Number of iterations')
 axs.grid(True)
@@ -61,7 +63,7 @@ axs.set_axisbelow(True)
 
 
 # axs[0].set_ylabel(r'Number of iterations')
-axs.set_ylabel(r'Duality gap')
+axs.set_ylabel(r'$\max_c \mathbf{A}^{(c)} \bullet \bar{\mathbf{X}}$')
 # # uu = 5*20
 # # ll = 15*20
 axs.set_xlim(50, 700)
@@ -79,7 +81,7 @@ axs.set_ylim(0, 1.25)
 
 
 # Add a legend
-ncol = 3  # Number of columns in the legend
+ncol = 2  # Number of columns in the legend
 h, l = lines, data_name_list
 nrows = -(-len(h) // ncol)                         # ceiling division
 idx   = np.arange(len(h))
